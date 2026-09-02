@@ -1,17 +1,30 @@
 import { useState } from "react"
 import axios from 'axios'
+import { useNavigate } from "react-router-dom";
 
 export default function Register() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [file, setFile] = useState(null);
+    const [file, setFile] = useState<File | null>(null);
 
-    const handleSubmit = (e : React.SubmitEvent<HTMLFormElement>) => {
+    const navigate = useNavigate();
+    const handleSubmit = async (e : React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
-        axios.post('http://localhost:3000/chat/user/register', {
-            username, password,
-        })
         const formData = new FormData();
+        formData.append('username', username);
+        formData.append('password', password);
+        file && formData.append('file', file);
+        try {
+           const response = await axios.post('http://localhost:3000/chat/user/register', formData);   
+            if (response.status === 201) {
+                navigate('/chat');
+            }
+        }
+        catch (error) {
+            console.log(error);
+        }
+
+
 
     }
     return (
@@ -29,7 +42,10 @@ export default function Register() {
                 </div>
 
                 <div>
-                    <input type="file" className="border border-slate-200 p-2 block w-full text-m text-slate-500
+                    <input 
+                    type="file" 
+                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                    className="border border-slate-200 p-2 block w-full text-m text-slate-500
                     file:mr-4 file:py-2 file:px-4
                     file:rounded-full file:border-0
                     file:text-sm file:font-semibold

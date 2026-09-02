@@ -1,13 +1,27 @@
+import axios from "axios";
 import { useState } from "react"
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
-    const handleSubmit = (e : React.SubmitEvent<HTMLFormElement>) => {
+    const navigate = useNavigate();
+
+    const handleSubmit = async (e : React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
+        try {
+           const response = await axios.post('http://localhost:3000/chat/user/login', {username, password});   
+            if (response.status === 202) {
+                navigate('/chat');
+            }
+        }
+        catch (error) {
+            console.log(error);
+        }
     }
+    
     return (
         
         <form onSubmit={handleSubmit} className="flex justify-center">

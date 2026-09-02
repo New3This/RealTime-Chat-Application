@@ -9,7 +9,7 @@ export default function Navbar() {
             <div>RealTime Chat</div>
             <div className="flex flex-row justify-end gap-3">
                 <div onClick={() => navigate('/login')}>Login</div>
-                <div>Signup</div>
+                <div onClick={() => navigate('/register')}>Signup</div>
             </div>
         </div>
     )
