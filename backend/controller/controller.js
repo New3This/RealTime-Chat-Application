@@ -1,7 +1,7 @@
 import multer from 'multer'
 import User from '../model/User.js'
 import bcrypt from 'bcrypt'
-import jsonwebtoken from 'jsonwebtoken'
+import jwt from 'jsonwebtoken'
 
 const storage = multer.diskStorage({
     destination: function(req, file, cb) {
@@ -28,11 +28,25 @@ async function Register(req, res) {
         const generateUser = new User({
             username,
             password: hashedPassword,
-            image: file.filename
+            image: file?.filename
         });
-        
+        const token = jwt.sign({id: generateUser._id, username: generateUser.username}, process.env.JWT_SECRET, {expiresIn: '3d'});
         await generateUser.save();
-        return res.status(201).json({message: "User created successfully"});
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            maxAge: 3 * 24 * 60 * 60 * 1000,
+        });
+
+        return res.status(201).json({
+            message: "User created successfully", 
+            token,
+            user: {
+                userId: generateUser._id, 
+                username: generateUser.username, 
+                image: generateUser.image
+            }
+        });
         
     }
     catch (error) {
@@ -51,7 +65,20 @@ async function Login(req, res) {
             return res.status(404).json({message: "User does not exist"});
         }
         else if (await bcrypt.compare(password, user.password)) {
-            return res.status(202).json({message: "User Login Accepted"});
+            const token = jwt.sign({id: user._id, username: user.username}, process.env.JWT_SECRET, {expiresIn: '3d'});
+            res.cookie('token', token, {
+                httpOnly: true,
+                maxAge: 3 * 24 * 60 * 60 * 1000,
+            });
+            return res.status(202).json({
+                message: "User Login Accepted",
+                token,
+                user: {
+                    userId: user._id,
+                    username: user.username,
+                    image: user.image
+                }
+            });
         }
         else {
             return res.status(401).json({message: "User details are incorrect"});
@@ -63,5 +90,33 @@ async function Login(req, res) {
     }
 }
 
-export {Register, Login}
+async function UserInfo(req, res) {
+    try {
+        const token = req.cookies.token;
+        if (!token) {
+            return res.status(401).json({message: "No token provided"});
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id);
+        
+        if (!user) {
+            return res.status(404).json({message: "User not found"});
+        }
+
+        return res.status(200).json({
+            user: {
+                userId: user._id,
+                username: user.username,
+                image: user.image
+            }
+        });
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(400).json({message: "Error fetching user: " + error});
+    }
+}
+
+export {Register, Login, UserInfo}
 export default upload

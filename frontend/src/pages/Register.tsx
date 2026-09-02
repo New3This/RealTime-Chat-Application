@@ -15,8 +15,9 @@ export default function Register() {
         formData.append('password', password);
         file && formData.append('file', file);
         try {
-           const response = await axios.post('http://localhost:3000/chat/user/register', formData);   
+           const response = await axios.post('http://localhost:3000/chat/user/register', formData, { withCredentials: true });   
             if (response.status === 201) {
+                console.log(response);
                 navigate('/chat');
             }
         }
