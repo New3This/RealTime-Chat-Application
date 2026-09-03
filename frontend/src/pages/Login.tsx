@@ -1,27 +1,41 @@
 import axios from "axios";
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { type UserType } from "../context/AuthContext";
 
 export default function Login() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
     const navigate = useNavigate();
+    const { user, setUser } = useAuth();
 
     const handleSubmit = async (e : React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         try {
-           const response = await axios.post('http://localhost:3000/api/auth/login', {username, password}, { withCredentials: true });   
+           const response = await axios.post<{user : UserType}>('http://localhost:3000/api/auth/login', {username, password}, { withCredentials: true });
             if (response.status === 202) {
-                navigate('/chat');
+                setUser({
+                    id: response.data.user.id,
+                    username: response.data.user.username,
+                    image: response.data.user.image || null
+                });
+                navigate('/chat', { replace: true });
             }
         }
         catch (error) {
             console.log(error);
         }
     }
-    
+
+    useEffect(() => {
+        if (user) {
+            navigate('/chat', { replace: true });
+        }
+    }, [user]);
+
     return (
         
         <form onSubmit={handleSubmit} className="flex justify-center">

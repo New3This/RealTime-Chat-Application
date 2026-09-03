@@ -2,10 +2,10 @@ import { createContext, type ReactNode } from "react";
 import { useState, useEffect, useContext } from "react";
 import axios from "axios";
 
-interface User {
+export interface UserType {
     id: string;
-    email: string;
     username: string;
+    image: string | null;
 }
 
 interface ChildrenType {
@@ -13,22 +13,22 @@ interface ChildrenType {
 }
 
 interface AuthContextType {
-    user: User | null;
+    user: UserType | null;
     loading: boolean;
-    setUser: (user: User | null) => void;
+    setUser: (user: UserType | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children } : ChildrenType) => {
     
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<UserType | null>(null);
     const [loading, setLoading] = useState(true);
     
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const response = await axios.get<{ user: User }>('http://localhost:3000/api/auth/user', {withCredentials: true});
+                const response = await axios.get<{ user: UserType }>('http://localhost:3000/api/auth/user', {withCredentials: true});
                 if (response.status === 200 || response.status === 202) {
                     setUser(response.data.user);
                 }

@@ -1,23 +1,38 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import axios from 'axios'
 import { useNavigate } from "react-router-dom";
+import {useAuth} from "../context/AuthContext";
+import { type UserType } from "../context/AuthContext";
 
 export default function Register() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [file, setFile] = useState<File | null>(null);
+    const { user, setUser } = useAuth();
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (user) {
+            navigate('/chat', { replace: true });
+        }
+    }, [user]);
+
     const handleSubmit = async (e : React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData();
         formData.append('username', username);
         formData.append('password', password);
         file && formData.append('file', file);
+
         try {
-           const response = await axios.post('http://localhost:3000/api/auth/register', formData, { withCredentials: true });   
+           const response = await axios.post<{ user: UserType }>('http://localhost:3000/api/auth/register', formData, { withCredentials: true });   
             if (response.status === 201) {
-                console.log(response);
+                setUser({
+                    id: response.data.user.id,
+                    username: response.data.user.username,
+                    image: response.data.user.image || null
+                })
                 navigate('/chat');
             }
         }

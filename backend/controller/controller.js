@@ -99,25 +99,9 @@ function Logout(req, res) {
 
 async function UserInfo(req, res) {
     try {
-        const token = req.cookies.token;
-        if (!token) {
-            return res.status(401).json({message: "No token provided"});
-        }
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id);
+        const user = req.user;
         
-        if (!user) {
-            return res.status(404).json({message: "User not found"});
-        }
-
-        return res.status(200).json({
-            user: {
-                userId: user._id,
-                username: user.username,
-                image: user.image
-            }
-        });
+        return res.status(200).json({ user });
     }
     catch (error) {
         console.log(error);
