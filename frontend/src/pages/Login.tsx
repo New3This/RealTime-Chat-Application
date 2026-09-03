@@ -12,7 +12,7 @@ export default function Login() {
         e.preventDefault();
 
         try {
-           const response = await axios.post('http://localhost:3000/chat/user/login', {username, password});   
+           const response = await axios.post('http://localhost:3000/api/auth/login', {username, password}, { withCredentials: true });   
             if (response.status === 202) {
                 navigate('/chat');
             }

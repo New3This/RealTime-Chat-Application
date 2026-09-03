@@ -3,9 +3,9 @@ import { useState, useEffect, useContext } from "react";
 import axios from "axios";
 
 interface User {
-  id: string;
-  email: string;
-  username: string;
+    id: string;
+    email: string;
+    username: string;
 }
 
 interface ChildrenType {
@@ -13,8 +13,9 @@ interface ChildrenType {
 }
 
 interface AuthContextType {
-  user: User | null;
-  setUser: (user: User | null) => void;
+    user: User | null;
+    loading: boolean;
+    setUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children } : ChildrenType) => {
     
     const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
     
     useEffect(() => {
         const fetchUser = async () => {
@@ -34,13 +36,16 @@ export const AuthProvider = ({ children } : ChildrenType) => {
             catch (error) {
                 setUser(null);
             }
+            finally {
+                setLoading(false);
+            }
         };
         fetchUser();
     }, [])
 
 
     return (
-        <AuthContext.Provider value={{user, setUser}}>
+        <AuthContext.Provider value={{user, loading, setUser}}>
             {children}
         </AuthContext.Provider>
     )

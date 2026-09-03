@@ -90,6 +90,13 @@ async function Login(req, res) {
     }
 }
 
+function Logout(req, res) {
+    res.clearCookie('token', {
+        httpOnly: true
+    });
+    return res.status(204).send();
+}
+
 async function UserInfo(req, res) {
     try {
         const token = req.cookies.token;
@@ -118,5 +125,5 @@ async function UserInfo(req, res) {
     }
 }
 
-export {Register, Login, UserInfo}
+export {Register, Login, Logout, UserInfo}
 export default upload
