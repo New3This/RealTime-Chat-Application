@@ -14,6 +14,7 @@ export default function Home() {
     }, [loading, user, navigate]);
 
     return (
-        <></>
+        <>
+        </>
     )
 }

@@ -4,7 +4,8 @@ import 'dotenv/config'
 import connectDB from './db/connection.js'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
-import router from './routes/routes.js'
+import authentication from './routes/authentication.js'
+import chat from './routes/chat.js'
 
 
 const app = express();
@@ -14,7 +15,8 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
-app.use('/api/auth', router);
+app.use('/api/auth', authentication);
+app.use('/api/chat', chat);
 
 app.listen(process.env.PORT, async () => {
     connectDB();

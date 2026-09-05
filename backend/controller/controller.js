@@ -1,5 +1,5 @@
 import multer from 'multer'
-import User from '../model/User.js'
+import {User} from '../model/model.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
@@ -109,5 +109,24 @@ async function UserInfo(req, res) {
     }
 }
 
-export {Register, Login, Logout, UserInfo}
+async function Userbase(req, res) {
+
+    const currentID = req.user._id;
+    
+    try {
+        const users = await User.find({
+            _id: { $ne: currentID }
+        });
+
+        if (!users) {
+            return res.status(404).json({message: "No users found"});
+        }
+        return res.status(200).json({ users });
+    }
+    catch (error) {
+        return res.status(400).json({message: "Error fetching users: " + error});
+    }
+}
+
+export {Register, Login, Logout, UserInfo, Userbase}
 export default upload
