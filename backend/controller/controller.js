@@ -2,6 +2,8 @@ import multer from 'multer'
 import {User} from '../model/model.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import { Conversation, Message } from '../model/model.js'
+import { io } from '../socket/socket.js'
 
 const storage = multer.diskStorage({
     destination: function(req, file, cb) {
@@ -25,13 +27,12 @@ async function Register(req, res) {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const generateUser = new User({
+        const generateUser = new User.create({
             username,
             password: hashedPassword,
             image: file?.filename
         });
         const token = jwt.sign({id: generateUser._id, username: generateUser.username}, process.env.JWT_SECRET, {expiresIn: '3d'});
-        await generateUser.save();
 
         res.cookie('token', token, {
             httpOnly: true,
@@ -42,12 +43,11 @@ async function Register(req, res) {
             message: "User created successfully", 
             token,
             user: {
-                userId: generateUser._id, 
-                username: generateUser.username, 
+                id: generateUser._id.toString(),
+                username: generateUser.username,
                 image: generateUser.image
             }
         });
-        
     }
     catch (error) {
         console.log(error);
@@ -74,7 +74,7 @@ async function Login(req, res) {
                 message: "User Login Accepted",
                 token,
                 user: {
-                    userId: user._id,
+                    id: user._id.toString(),
                     username: user.username,
                     image: user.image
                 }
@@ -109,11 +109,10 @@ async function UserInfo(req, res) {
     }
 }
 
-async function Userbase(req, res) {
+async function Userbase(req, res) { // get collection of users that exist except logged in
 
-    const currentID = req.user._id;
-    
     try {
+        const currentID = req.user.id;
         const users = await User.find({
             _id: { $ne: currentID }
         });
@@ -121,12 +120,73 @@ async function Userbase(req, res) {
         if (!users) {
             return res.status(404).json({message: "No users found"});
         }
-        return res.status(200).json({ users });
+        const userList = users.map((user) => ({
+            id: user._id.toString(),
+            username: user.username,
+            image: user.image ?? null
+        }));
+
+        return res.status(200).json({ users: userList });
     }
     catch (error) {
         return res.status(400).json({message: "Error fetching users: " + error});
     }
 }
 
-export {Register, Login, Logout, UserInfo, Userbase}
+async function ChatMessage(req, res) { // saves messages and participants to db
+    const {receiverId} = req.params;
+    const senderId = req.user.id;
+    const {content} = req.body;
+
+    let conversation = await Conversation.findOne({ // find if conversation exists
+        chatParticipants: {$all: [senderId, receiverId]} // $all finds documents where a field is an array holding every value listed in the $all array
+    });
+
+    if (!conversation) {
+        conversation = await Conversation.create({
+            chatParticipants: [senderId, receiverId]
+        });
+    }
+
+    const messageCreated = await Message.create({
+        conversationId: conversation._id,
+        sender: senderId,
+        message: content,
+    });
+
+    io.to(conversation._id.toString()).emit('newMsg', messageCreated); // 3. sender sends messageCreated to the conversationId room, where socket listening for 'newMsg' will pick up 
+
+    return res.status(200).json(messageCreated);
+}
+
+async function ReturnChat(req, res) {
+    try {
+        const { receiverId } = req.params;
+        const senderId = req.user.id;
+
+        let conversation = await Conversation.findOne({
+            chatParticipants: { $all: [senderId, receiverId] }
+        });
+
+        if (!conversation) {
+            conversation = await Conversation.create({
+                chatParticipants: [senderId, receiverId]
+            });
+        }
+
+        const messages = await Message.find({
+            conversationId: conversation._id
+        });
+
+        return res.status(200).json({
+            messages,
+            conversationId: conversation._id.toString()
+        });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ msg: err });
+    }
+}
+
+export {Register, Login, Logout, UserInfo, Userbase, ChatMessage, ReturnChat}
 export default upload

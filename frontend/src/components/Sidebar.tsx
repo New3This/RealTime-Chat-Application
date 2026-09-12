@@ -1,10 +1,47 @@
 import { type UserType } from "../context/AuthContext";
-import { useState } from "react";
+import { type Socket } from "socket.io-client";
+import axios from "axios";
+import { type ChatMessageType } from "../pages/Chat"
 
-export default function Sidebar({chatRooms, setChat} : {chatRooms : UserType[] | null, setChat : React.Dispatch<React.SetStateAction<boolean>>}) {
-    const startChat = (id : Number) => {
-        setChat(true);
-    }
+interface SidebarProps {
+    chatRooms: UserType[] | null;
+    setInitialiseChat: React.Dispatch<React.SetStateAction<boolean>>;
+    socket: Socket;
+    setReceiverId: React.Dispatch<React.SetStateAction<string>>;
+    setChat: React.Dispatch<React.SetStateAction<ChatMessageType[]>>;
+    setConversationId: React.Dispatch<React.SetStateAction<string>>;
+}
+
+export default function Sidebar({chatRooms, setInitialiseChat, socket, setReceiverId, setChat, setConversationId} : SidebarProps) {
+    const startChat = async (recipientID: string) => {
+        try {
+            const response = await axios.get(
+                `http://localhost:3000/chat/message/receive/${recipientID}`,
+                { withCredentials: true }
+            );
+
+            const messages = response.data.messages.map(({ message, sender }: any) => ({
+                message,
+                sender,
+            }));
+
+            setChat(messages);
+
+            const incomingConversationId = response.data.conversationId;
+
+            if (incomingConversationId) {
+                socket.emit('leaveConversation', incomingConversationId); // triggers when a user is selected in sidebar, and 'leaveConversation' in case new user (new user = new room cause new conversation)
+                socket.emit('joinConversation', incomingConversationId); // 1. send conversation id to socket looking for 'joinConversation'
+                setConversationId(incomingConversationId);
+            }
+        } catch (err) {
+            console.log(err);
+            setChat([]);
+        }
+
+        setReceiverId(recipientID);
+        setInitialiseChat(true);
+    };
     return (
             <div className="flex flex-col border w-70 bg-white/20">
                 <div className="flex p-4 justify-center border-gray-400">
@@ -17,10 +54,10 @@ export default function Sidebar({chatRooms, setChat} : {chatRooms : UserType[] |
                         )
                         : (
                             chatRooms?.map((person) => (
-                                <div key={person._id} onClick={() => startChat(parseInt(person._id))} className="flex justify-between items-center py-8 text-center px-8 border-b border-gray-400 cursor-pointer hover:bg-gray-100/50">
+                                <div key={person.id} onClick={() => startChat(person.id)} className="flex justify-between items-center py-8 text-center px-8 border-b border-gray-400 cursor-pointer hover:bg-gray-100/50">
                                     <div className="text-white font-bold">{person.username}</div>
                                     <div className="h-10 w-10 rounded-2xl">
-                                        <img src={person.image || "s"} alt="Profile" />
+                                        <img src={`http://localhost:3000/images/${person.image}` || "s"} alt="Profile" />
                                     </div>
                                 </div>
                             ))

@@ -51,7 +51,7 @@ export default function Login() {
                 </div>
 
                 <div className="flex justify-center">
-                    <button type="submit" className="bg-blue-500 w-full py-2 hover:bg-blue-300">Submit</button>
+                    <button type="submit" className="bg-blue-500 w-full py-2 hover:bg-blue-300 cursor-pointer">Submit</button>
                 </div>
             </div>
 

@@ -1,9 +1,21 @@
+import axios from "axios";
 import { useState } from "react";
-export default function Message() {
+
+export interface MessageProps {
+    receiverId: string;
+};
+
+export default function Message({receiverId} : MessageProps) {
     const [message, setMessage] = useState("");
 
-    function handleSubmit() {
-        console.log(message);
+    async function handleSubmit() {
+        try {
+            await axios.post(`http://localhost:3000/chat/message/${receiverId}`, {content: message}, {withCredentials: true});
+            setMessage("");
+        }
+        catch (err) {
+            console.log(err);
+        }
     }
     
     return (

@@ -6,19 +6,19 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import authentication from './routes/authentication.js'
 import chat from './routes/chat.js'
+import {app, server} from "./socket/socket.js"
 
-
-const app = express();
 app.use(cors({
-    origin: 'http://localhost:5173',
-    credentials: true,
+        origin: process.env.FRONTEND_URL,
+        credentials: true
 }));
 app.use(express.json());
+app.use('/images', express.static('images'));
 app.use(cookieParser());
 app.use('/api/auth', authentication);
-app.use('/api/chat', chat);
+app.use('/chat', chat);
 
-app.listen(process.env.PORT, async () => {
+server.listen(process.env.PORT, async () => {
     connectDB();
     console.log("Server is running");
 })

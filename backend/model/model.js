@@ -16,13 +16,15 @@ const UserSchema = new mongoose.Schema({
 })
 
 const ConversationSchema = new mongoose.Schema({
-    chatParticipants : [{ type: mongoose.Schema.Types.ObjectId, ref: 'User'}]
-})
+    chatParticipants: [
+        {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true,}
+    ]
+}, {timestamps: true});
 
 const MessageSchema = new mongoose.Schema({
-  conversationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true },
-  sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  message: { type: String, required: true }    
+    conversationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true },
+    sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    message: { type: String, required: true }    
 }, {timestamps: true})
 
 const User = mongoose.model('User', UserSchema);
