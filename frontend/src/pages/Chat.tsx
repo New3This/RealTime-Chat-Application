@@ -7,9 +7,10 @@ import { type Socket } from "socket.io-client";
 import Sidebar from "../components/Sidebar";
 import Message from "../components/Message";
 import deleteImg from "../assets/delete.png";
+import editImg from "../assets/edit.png";
 
 export interface ChatMessageType {
-    id: string;
+    id: Number;
     message: string;
     sender: string;
 };
@@ -23,14 +24,46 @@ export default function Chat({ socket }: { socket: Socket }) {
     const [receiverId, setReceiverId] = useState("");
     const [conversationId, setConversationId] = useState("");
     const [option, setOption] = useState<Number>();
-    
+    const [editingMessageId, setEditingMessageId] = useState<Number | null>(null);
+    const [editText, setEditText] = useState("");
 
     const handleDel = async (msgId : Number) => {
-        const response = await axios.delete(`http://localhost:3000/chat/removeUser/${msgId}`, {withCredentials: true});
+        const response = await axios.delete(`http://localhost:3000/chat/removeMsg/${msgId}`, {withCredentials: true});
         if (response.status === 200) {
             setChat((prev) => prev.filter((msg) => msg.id !== response.data.id));
         }
     }
+
+    const handleEdit = (msg: ChatMessageType) => {
+        setEditingMessageId(msg.id);
+        setEditText(msg.message);
+        setOption(undefined);
+    }
+
+    const submitEdit = async () => {
+
+        try {
+            const response = await axios.patch(
+                `http://localhost:3000/chat/editMsg/${editingMessageId}`,
+                { message: editText },
+                { withCredentials: true }
+            );
+
+            if (response.status === 200) {
+                const messages = response.data.messages.map(({ _id, message, sender }: any) => ({
+                    id: _id,
+                    message,
+                    sender,
+                }));
+                setChat(messages);
+                setEditingMessageId(null);
+                setEditText("");
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
     const getChatRooms = async () => {
       try {
             const response = await axios.get<{users: UserType[]}>('http://localhost:3000/chat/userbase', {withCredentials: true});
@@ -70,20 +103,37 @@ export default function Chat({ socket }: { socket: Socket }) {
             {initialiseChat && (
                 <div>
                     {chat.map((msg) => (
-                            <div key={msg.id} className="flex flex-row">
-                                <div className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} w-full border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
-                                {option === msg.id && msg.sender === user?.id && (
-                                    <div className="">
-                                        <img src={deleteImg} className="h-5 absolute right-2 cursor-pointer" onClick={() => handleDel(msg.id)}/>
-                                    </div>
-                                )}
-                            </div>
+                        <div key={String(msg.id)} className="flex flex-row">
+                            {editingMessageId === msg.id ? (
+                                <input
+                                    className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} w-full border-b border-b-black/25`}
+                                    value={editText} autoFocus onChange={(e) => setEditText(e.target.value)} 
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            submitEdit();
+                                        }
+                                    }}
+
+                                    onBlur={() => { // if just click away mid-edit, reset 
+                                        setEditingMessageId(null);
+                                        setEditText("");
+                                    }}/>
+                            ) : (
+                                <>
+                                    <div className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} w-full border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
+                                    {option === msg.id && msg.sender === user?.id && (
+                                        <div className="">
+                                            <img src={editImg} className="h-5 absolute right-2 cursor-pointer" onClick={() => handleEdit(msg)}/>
+                                            <img src={deleteImg} className="h-5 absolute right-10 cursor-pointer" onClick={() => handleDel(msg.id)}/>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     ))}
                     <Message receiverId={receiverId}/>
                 </div>
             )}
         </div>
-
     )
-
 }

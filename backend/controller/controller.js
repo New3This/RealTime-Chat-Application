@@ -201,11 +201,44 @@ async function DeleteChat(req, res) {
 
     }
     catch (err) {
-        console.log(err);
-        return res.status(400);
+        return res.status(500).json({msg: err});
     }
 
 }
 
-export {Register, Login, Logout, UserInfo, Userbase, ChatMessage, ReturnChat, DeleteChat}
+async function EditChat(req, res) {
+    try {
+        // const isSender = await Message.findById(id);
+        console.log(req.body);
+        const messageComplete = await Message.findByIdAndUpdate(
+            req.params.msgId,
+            req.body,
+            { returnDocument: 'after', runValidators: true }
+        );
+
+        console.log(messageComplete);
+        
+        const conversationId = messageComplete.conversationId;
+
+        const messages = await Message.find({
+            conversationId: conversationId
+        });
+        return res.status(200).json({
+            messages,
+            conversationId
+        });
+        
+        // else {
+        //     return res.status(401).json({message: "User is not authorised to edit"});
+        // }
+
+    }
+    catch (err) {
+        console.log(err);
+        return res.status(500).json({msg: err});
+    }
+
+}
+
+export {Register, Login, Logout, UserInfo, Userbase, ChatMessage, ReturnChat, DeleteChat, EditChat}
 export default upload
