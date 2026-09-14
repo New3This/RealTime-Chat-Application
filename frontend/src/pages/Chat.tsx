@@ -22,11 +22,11 @@ export default function Chat({ socket }: { socket: Socket }) {
     const [initialiseChat, setInitialiseChat] = useState<boolean>(false);
     const [receiverId, setReceiverId] = useState("");
     const [conversationId, setConversationId] = useState("");
-    const [option, setOption] = useState<String>();
+    const [option, setOption] = useState<Number>();
     
 
-    const handleDel = async (msgId : String) => {
-        const response = await axios.patch(`http://localhost:3000/chat/removeUser/${msgId}`, {}, {withCredentials: true});
+    const handleDel = async (msgId : Number) => {
+        const response = await axios.delete(`http://localhost:3000/chat/removeUser/${msgId}`, {withCredentials: true});
         if (response.status === 200) {
             setChat((prev) => prev.filter((msg) => msg.id !== response.data.id));
         }
@@ -72,7 +72,7 @@ export default function Chat({ socket }: { socket: Socket }) {
                     {chat.map((msg) => (
                             <div key={msg.id} className="flex flex-row">
                                 <div className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} w-full border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
-                                {option === (msg.id).toString() && msg.sender === user?.id && (
+                                {option === msg.id && msg.sender === user?.id && (
                                     <div className="">
                                         <img src={deleteImg} className="h-5 absolute right-2 cursor-pointer" onClick={() => handleDel(msg.id)}/>
                                     </div>

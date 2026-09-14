@@ -14,6 +14,6 @@ router.post('/message/:receiverId', ChatMessage);
 
 router.get('/message/receive/:receiverId', ReturnChat);
 
-router.patch('/removeUser/:msgId', DeleteChat);
+router.delete('/removeUser/:msgId', DeleteChat);
 
 export default router;
