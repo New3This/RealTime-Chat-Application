@@ -6,8 +6,10 @@ import { type UserType } from "../context/AuthContext";
 import { type Socket } from "socket.io-client";
 import Sidebar from "../components/Sidebar";
 import Message from "../components/Message";
+import deleteImg from "../assets/delete.png";
 
 export interface ChatMessageType {
+    id: string;
     message: string;
     sender: string;
 };
@@ -20,7 +22,15 @@ export default function Chat({ socket }: { socket: Socket }) {
     const [initialiseChat, setInitialiseChat] = useState<boolean>(false);
     const [receiverId, setReceiverId] = useState("");
     const [conversationId, setConversationId] = useState("");
+    const [option, setOption] = useState<String>();
+    
 
+    const handleDel = async (msgId : String) => {
+        const response = await axios.patch(`http://localhost:3000/chat/removeUser/${msgId}`, {}, {withCredentials: true});
+        if (response.status === 200) {
+            setChat((prev) => prev.filter((msg) => msg.id !== response.data.id));
+        }
+    }
     const getChatRooms = async () => {
       try {
             const response = await axios.get<{users: UserType[]}>('http://localhost:3000/chat/userbase', {withCredentials: true});
@@ -42,11 +52,9 @@ export default function Chat({ socket }: { socket: Socket }) {
 
         getChatRooms();
 
-        const handleNewMessage = (message : any) => {
-            const incomingConversation = message.conversationId;
-            console.log(incomingConversation);
-   
-            setChat(state => [...state, { sender: message.sender, message: message.message }]);
+        const handleNewMessage = (message : any) => { // for real-time msg upd
+            console.log(message);   
+            setChat(state => [...state, { id:message.id, sender: message.sender, message: message.message }]);
         }
 
         socket.on('newMsg', handleNewMessage); // 4. picks up the msg sent to socket listening to 'newMsg' event, and runs handleNewMessage to display chat
@@ -61,8 +69,15 @@ export default function Chat({ socket }: { socket: Socket }) {
             <Sidebar chatRooms={chatRooms} setInitialiseChat={setInitialiseChat} socket={socket} setReceiverId={setReceiverId} setChat={setChat} setConversationId={setConversationId}/>
             {initialiseChat && (
                 <div>
-                    {chat.map((msg, index) => (
-                        <div key={index} className={user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"}> {msg.message} </div>
+                    {chat.map((msg) => (
+                            <div key={msg.id} className="flex flex-row">
+                                <div className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} w-full border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
+                                {option === (msg.id).toString() && msg.sender === user?.id && (
+                                    <div className="">
+                                        <img src={deleteImg} className="h-5 absolute right-2 cursor-pointer" onClick={() => handleDel(msg.id)}/>
+                                    </div>
+                                )}
+                            </div>
                     ))}
                     <Message receiverId={receiverId}/>
                 </div>

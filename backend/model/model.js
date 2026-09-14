@@ -13,7 +13,7 @@ const UserSchema = new mongoose.Schema({
     image: {
         type: String
     }
-})
+});
 
 const ConversationSchema = new mongoose.Schema({
     chatParticipants: [
@@ -25,7 +25,7 @@ const MessageSchema = new mongoose.Schema({
     conversationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true },
     sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     message: { type: String, required: true }    
-}, {timestamps: true})
+}, {timestamps: true});
 
 const User = mongoose.model('User', UserSchema);
 const Message = mongoose.model('Message', MessageSchema);

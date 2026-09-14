@@ -19,8 +19,8 @@ export default function Sidebar({chatRooms, setInitialiseChat, socket, setReceiv
                 `http://localhost:3000/chat/message/receive/${recipientID}`,
                 { withCredentials: true }
             );
-
-            const messages = response.data.messages.map(({ message, sender }: any) => ({
+            const messages = response.data.messages.map(({_id, message, sender }: any) => ({
+                id:_id,
                 message,
                 sender,
             }));

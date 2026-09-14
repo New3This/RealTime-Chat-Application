@@ -1,5 +1,5 @@
 import authenticate from "../middleware/authenticate.js";
-import { UserInfo, Userbase, ChatMessage, ReturnChat} from "../controller/controller.js";
+import { UserInfo, Userbase, ChatMessage, ReturnChat, DeleteChat} from "../controller/controller.js";
 import express from 'express';
 
 const router = express.Router();
@@ -13,5 +13,7 @@ router.get('/userbase', Userbase);
 router.post('/message/:receiverId', ChatMessage);
 
 router.get('/message/receive/:receiverId', ReturnChat);
+
+router.patch('/removeUser/:msgId', DeleteChat);
 
 export default router;
