@@ -2,8 +2,10 @@ import { type UserType } from "../context/AuthContext";
 import { type Socket } from "socket.io-client";
 import axios from "axios";
 import { type ChatMessageType } from "../pages/Chat"
+import { useState } from "react";
 
 interface SidebarProps {
+    setReceipientImage: React.Dispatch<React.SetStateAction<String>>;
     chatRooms: UserType[] | null;
     setInitialiseChat: React.Dispatch<React.SetStateAction<boolean>>;
     socket: Socket;
@@ -12,19 +14,33 @@ interface SidebarProps {
     setConversationId: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export default function Sidebar({chatRooms, setInitialiseChat, socket, setReceiverId, setChat, setConversationId} : SidebarProps) {
+export default function Sidebar({setReceipientImage, chatRooms, setInitialiseChat, socket, setReceiverId, setChat, setConversationId} : SidebarProps) {
+
+    const [activeId, setActiveId] = useState(null);
     const startChat = async (recipientID: string) => {
+
         try {
             const response = await axios.get(
                 `http://localhost:3000/chat/message/receive/${recipientID}`,
                 { withCredentials: true }
             );
-            const messages = response.data.messages.map(({_id, message, sender }: any) => ({
+            const messages = response.data.messages.map(({_id, message, sender } : any) => ({
                 id:_id,
                 message,
                 sender,
             }));
 
+            setReceipientImage(response.data.image);
+
+            setInitialiseChat((prev) => {
+                if (prev === true && activeId === response.data.conversationId) {
+                    return false;
+                }
+                return true;
+            });
+
+            setActiveId(response.data.conversationId);
+            
             setChat(messages);
 
             const incomingConversationId = response.data.conversationId;
@@ -40,7 +56,6 @@ export default function Sidebar({chatRooms, setInitialiseChat, socket, setReceiv
         }
 
         setReceiverId(recipientID);
-        setInitialiseChat(true);
     };
     return (
             <div className="flex flex-col border w-70 bg-white/20">
