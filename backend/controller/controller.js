@@ -27,7 +27,8 @@ async function Register(req, res) {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const generateUser = new User.create({
+
+        const generateUser = await User.create({
             username,
             password: hashedPassword,
             image: file?.filename
@@ -99,9 +100,19 @@ function Logout(req, res) {
 
 async function UserInfo(req, res) {
     try {
-        const user = req.user;
+        const user = await User.findById(req.user.id).select('_id username image');
+
+        if (!user) {
+            return res.status(404).json({message: "User not found"});
+        }
         
-        return res.status(200).json({ user });
+        return res.status(200).json({
+            user: {
+                id: user._id.toString(),
+                username: user.username,
+                image: user.image ?? null
+            }
+        });
     }
     catch (error) {
         console.log(error);
@@ -169,6 +180,7 @@ async function ReturnChat(req, res) {
         const { receiverId } = req.params;
         const senderId = req.user.id;
 
+        let user = await User.findById(receiverId);
         let conversation = await Conversation.findOne({
             chatParticipants: { $all: [senderId, receiverId] }
         });
@@ -184,6 +196,7 @@ async function ReturnChat(req, res) {
         });
 
         return res.status(200).json({
+            image: user.image,
             messages,
             conversationId: conversation._id.toString()
         });

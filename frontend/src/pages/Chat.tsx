@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
-import { useEffect, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { type UserType } from "../context/AuthContext";
 import { type Socket } from "socket.io-client";
@@ -26,7 +26,7 @@ export default function Chat({ socket }: { socket: Socket }) {
     const [option, setOption] = useState<Number>();
     const [editingMessageId, setEditingMessageId] = useState<Number | null>(null);
     const [editText, setEditText] = useState("");
-
+    const [receipientImage, setReceipientImage] = useState<String>("");
     const handleDel = async (msgId : Number) => {
         const response = await axios.delete(`http://localhost:3000/chat/removeMsg/${msgId}`, {withCredentials: true});
         if (response.status === 200) {
@@ -67,7 +67,6 @@ export default function Chat({ socket }: { socket: Socket }) {
     const getChatRooms = async () => {
       try {
             const response = await axios.get<{users: UserType[]}>('http://localhost:3000/chat/userbase', {withCredentials: true});
-
             if (response.status === 200) {
                 setChatRooms(response.data.users);
             } 
@@ -86,7 +85,6 @@ export default function Chat({ socket }: { socket: Socket }) {
         getChatRooms();
 
         const handleNewMessage = (message : any) => { // for real-time msg upd
-            console.log(message);   
             setChat(state => [...state, { id:message.id, sender: message.sender, message: message.message }]);
         }
 
@@ -99,7 +97,7 @@ export default function Chat({ socket }: { socket: Socket }) {
 
     return (
         <div className="bg-black/70 h-[calc(100vh-64px)] flex flex-row">
-            <Sidebar chatRooms={chatRooms} setInitialiseChat={setInitialiseChat} socket={socket} setReceiverId={setReceiverId} setChat={setChat} setConversationId={setConversationId}/>
+            <Sidebar setReceipientImage={setReceipientImage} chatRooms={chatRooms} setInitialiseChat={setInitialiseChat} socket={socket} setReceiverId={setReceiverId} setChat={setChat} setConversationId={setConversationId}/>
             {initialiseChat && (
                 <div>
                     {chat.map((msg) => (
@@ -119,15 +117,20 @@ export default function Chat({ socket }: { socket: Socket }) {
                                         setEditText("");
                                     }}/>
                             ) : (
-                                <>
-                                    <div className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} w-full border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
-                                    {option === msg.id && msg.sender === user?.id && (
-                                        <div className="">
-                                            <img src={editImg} className="h-5 absolute right-2 cursor-pointer" onClick={() => handleEdit(msg)}/>
-                                            <img src={deleteImg} className="h-5 absolute right-10 cursor-pointer" onClick={() => handleDel(msg.id)}/>
+                                <div className={`flex w-full p-2 ${user?.id === msg.sender ? "justify-end" : "justify-start"}`}>
+                                    <div className="flex flex-row">
+                                        <div className="h-10 w-10 rounded-2xl">
+                                            <img src={user?.id === msg.sender ? `http://localhost:3000/images/${user.image}` : `http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
                                         </div>
-                                    )}
-                                </>
+                                        <div className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} rounded-lg p-3 border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
+                                        {option === msg.id && msg.sender === user?.id && (
+                                            <div className="">
+                                                <img src={editImg} className="h-5 absolute right-2 cursor-pointer" onClick={() => handleEdit(msg)}/>
+                                                <img src={deleteImg} className="h-5 absolute right-10 cursor-pointer" onClick={() => handleDel(msg.id)}/>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             )}
                         </div>
                     ))}
