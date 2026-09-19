@@ -166,13 +166,7 @@ async function ChatMessage(req, res) { // saves messages and participants to db
     });
 
     io.to(conversation._id.toString()).emit('newMsg', messageCreated); // 3. sender sends messageCreated to the conversationId room, where socket listening for 'newMsg' will pick up 
-
-    return res.status(200).json({
-        conversationId: messageCreated.conversationId,
-        sender: messageCreated.sender,
-        message: messageCreated.message,
-        id: messageCreated._id
-    });
+    return res.sendStatus(204);
 }
 
 async function ReturnChat(req, res) {

@@ -1,8 +1,10 @@
 import axios from "axios";
 import { useState } from "react";
+import { type ChatMessageType } from "../pages/Chat"
 
 export interface MessageProps {
     receiverId: string;
+    setChat: React.Dispatch<React.SetStateAction<ChatMessageType[]>>;
 };
 
 export default function Message({receiverId} : MessageProps) {
@@ -10,7 +12,7 @@ export default function Message({receiverId} : MessageProps) {
 
     async function handleSubmit() {
         try {
-            await axios.post(`http://localhost:3000/chat/message/${receiverId}`, {content: message}, {withCredentials: true});
+            const response = await axios.post(`http://localhost:3000/chat/message/${receiverId}`, {content: message}, {withCredentials: true});
             setMessage("");
         }
         catch (err) {

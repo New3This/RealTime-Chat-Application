@@ -41,7 +41,6 @@ export default function Chat({ socket }: { socket: Socket }) {
     }
 
     const submitEdit = async () => {
-
         try {
             const response = await axios.patch(
                 `http://localhost:3000/chat/editMsg/${editingMessageId}`,
@@ -85,7 +84,7 @@ export default function Chat({ socket }: { socket: Socket }) {
         getChatRooms();
 
         const handleNewMessage = (message : any) => { // for real-time msg upd
-            setChat(state => [...state, { id:message.id, sender: message.sender, message: message.message }]);
+            setChat(state => [...state, { id: message._id, sender: message.sender, message: message.message }]);
         }
 
         socket.on('newMsg', handleNewMessage); // 4. picks up the msg sent to socket listening to 'newMsg' event, and runs handleNewMessage to display chat
@@ -99,9 +98,10 @@ export default function Chat({ socket }: { socket: Socket }) {
         <div className="bg-black/70 h-[calc(100vh-64px)] flex flex-row">
             <Sidebar setReceipientImage={setReceipientImage} chatRooms={chatRooms} setInitialiseChat={setInitialiseChat} socket={socket} setReceiverId={setReceiverId} setChat={setChat} setConversationId={setConversationId}/>
             {initialiseChat && (
-                <div>
+            <div className="flex flex-col">
+                <div className="overflow-y-scroll">
                     {chat.map((msg) => (
-                        <div key={String(msg.id)} className="flex flex-row">
+                        <div key={String(msg.id)} data-id={String(msg.id)}className="flex flex-row">
                             {editingMessageId === msg.id ? (
                                 <input
                                     className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} w-full border-b border-b-black/25`}
@@ -117,16 +117,16 @@ export default function Chat({ socket }: { socket: Socket }) {
                                         setEditText("");
                                     }}/>
                             ) : (
-                                <div className={`flex w-full p-2 ${user?.id === msg.sender ? "justify-end" : "justify-start"}`}>
-                                    <div className="flex flex-row">
+                                <div className={`flex w-full px-5 py-5 ${user?.id === msg.sender ? "justify-end" : "justify-start"}`}>
+                                        <div className="flex flex-row relative">
                                         <div className="h-10 w-10 rounded-2xl">
                                             <img src={user?.id === msg.sender ? `http://localhost:3000/images/${user.image}` : `http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
                                         </div>
                                         <div className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} rounded-lg p-3 border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
                                         {option === msg.id && msg.sender === user?.id && (
-                                            <div className="">
-                                                <img src={editImg} className="h-5 absolute right-2 cursor-pointer" onClick={() => handleEdit(msg)}/>
-                                                <img src={deleteImg} className="h-5 absolute right-10 cursor-pointer" onClick={() => handleDel(msg.id)}/>
+                                            <div className="absolute flex flex-row border bg-gray-600 border-gray-700 top-12 right-0 gap-3 py-1 px-2">
+                                                <img src={editImg} className="h-5 cursor-pointer" onClick={() => handleEdit(msg)}/>
+                                                <img src={deleteImg} className="h-5 cursor-pointer" onClick={() => handleDel(msg.id)}/>
                                             </div>
                                         )}
                                     </div>
@@ -134,7 +134,8 @@ export default function Chat({ socket }: { socket: Socket }) {
                             )}
                         </div>
                     ))}
-                    <Message receiverId={receiverId}/>
+                </div>
+                <Message receiverId={receiverId} setChat={setChat}/>
                 </div>
             )}
         </div>
