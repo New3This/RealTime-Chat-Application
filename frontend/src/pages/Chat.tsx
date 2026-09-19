@@ -96,46 +96,50 @@ export default function Chat({ socket }: { socket: Socket }) {
 
     return (
         <div className="bg-black/70 h-[calc(100vh-64px)] flex flex-row">
-            <Sidebar setReceipientImage={setReceipientImage} chatRooms={chatRooms} setInitialiseChat={setInitialiseChat} socket={socket} setReceiverId={setReceiverId} setChat={setChat} setConversationId={setConversationId}/>
+            <div>
+                <Sidebar setReceipientImage={setReceipientImage} chatRooms={chatRooms} setInitialiseChat={setInitialiseChat} socket={socket} setReceiverId={setReceiverId} setChat={setChat} setConversationId={setConversationId}/>
+            </div>
             {initialiseChat && (
-            <div className="flex flex-col">
-                <div className="overflow-y-scroll">
-                    {chat.map((msg) => (
-                        <div key={String(msg.id)} data-id={String(msg.id)}className="flex flex-row">
-                            {editingMessageId === msg.id ? (
-                                <input
-                                    className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} w-full border-b border-b-black/25`}
-                                    value={editText} autoFocus onChange={(e) => setEditText(e.target.value)} 
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            submitEdit();
-                                        }
-                                    }}
+            <div className="flex flex-col w-full h-[calc(100vh-120px)]">
+                    <div className="overflow-y-scroll min-h-full">
+                        {chat.map((msg) => (
+                            <div key={String(msg.id)} data-id={String(msg.id)}className="flex w-full">
+                                {editingMessageId === msg.id ? (
+                                    <input
+                                        className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} w-full border-b border-b-black/25`}
+                                        value={editText} autoFocus onChange={(e) => setEditText(e.target.value)} 
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                submitEdit();
+                                            }
+                                        }}
 
-                                    onBlur={() => { // if just click away mid-edit, reset 
-                                        setEditingMessageId(null);
-                                        setEditText("");
-                                    }}/>
-                            ) : (
-                                <div className={`flex w-full px-5 py-5 ${user?.id === msg.sender ? "justify-end" : "justify-start"}`}>
-                                        <div className="flex flex-row relative">
-                                        <div className="h-10 w-10 rounded-2xl">
-                                            <img src={user?.id === msg.sender ? `http://localhost:3000/images/${user.image}` : `http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
-                                        </div>
-                                        <div className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} rounded-lg p-3 border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
-                                        {option === msg.id && msg.sender === user?.id && (
-                                            <div className="absolute flex flex-row border bg-gray-600 border-gray-700 top-12 right-0 gap-3 py-1 px-2">
-                                                <img src={editImg} className="h-5 cursor-pointer" onClick={() => handleEdit(msg)}/>
-                                                <img src={deleteImg} className="h-5 cursor-pointer" onClick={() => handleDel(msg.id)}/>
+                                        onBlur={() => { // if just click away mid-edit, reset 
+                                            setEditingMessageId(null);
+                                            setEditText("");
+                                        }}/>
+                                ) : (
+                                    <div className={`flex w-full px-5 py-5 ${user?.id === msg.sender ? "justify-end" : "justify-start"}`}>
+                                            <div className="flex flex-row relative">
+                                            <div className="h-10 w-10 rounded-2xl">
+                                                <img src={user?.id === msg.sender ? `http://localhost:3000/images/${user.image}` : `http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
                                             </div>
-                                        )}
+                                            <div className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} rounded-lg p-3 border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
+                                            {option === msg.id && msg.sender === user?.id && (
+                                                <div className="absolute flex flex-row border bg-gray-600 border-gray-700 top-12 right-0 gap-3 py-1 px-2">
+                                                    <img src={editImg} className="h-5 cursor-pointer" onClick={() => handleEdit(msg)}/>
+                                                    <img src={deleteImg} className="h-5 cursor-pointer" onClick={() => handleDel(msg.id)}/>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-                <Message receiverId={receiverId} setChat={setChat}/>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    <div className="absolute bottom-0">
+                        <Message receiverId={receiverId} setChat={setChat}/>
+                    </div>
                 </div>
             )}
         </div>
