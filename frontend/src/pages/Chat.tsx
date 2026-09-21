@@ -1,17 +1,16 @@
 import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "../context/AuthContext";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { type UserType } from "../context/AuthContext";
 import { type Socket } from "socket.io-client";
 import Sidebar from "../components/Sidebar";
 import Message from "../components/Message";
-import deleteImg from "../assets/delete.png";
-import editImg from "../assets/edit.png";
+import Reactions from "../components/Reactions";
 
 export interface ChatMessageType {
-    id: Number;
+    id: number;
     message: string;
     sender: string;
     createdAt: string;
@@ -25,16 +24,14 @@ export default function Chat({ socket }: { socket: Socket }) {
     const [initialiseChat, setInitialiseChat] = useState<boolean>(false);
     const [receiverId, setReceiverId] = useState("");
     const [conversationId, setConversationId] = useState("");
-    const [option, setOption] = useState<Number>();
-    const [editingMessageId, setEditingMessageId] = useState<Number | null>(null);
+    const [option, setOption] = useState<number | undefined>();
+    const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
     const [editText, setEditText] = useState("");
     const [receipientImage, setReceipientImage] = useState<String>("");
 
-    const dropdown = useRef<HTMLDivElement>(null);
+   
 
-    
-
-    const handleDel = async (msgId : Number) => {
+    const handleDel = async (msgId : number) => {
         const response = await axios.delete(`http://localhost:3000/chat/removeMsg/${msgId}`, {withCredentials: true});
         if (response.status === 200) {
             setChat((prev) => prev.filter((msg) => msg.id !== response.data.id));
@@ -89,15 +86,6 @@ export default function Chat({ socket }: { socket: Socket }) {
             return;
         }
 
-		const clickLocation = (event : MouseEvent) => {
-			if (dropdown.current && !dropdown.current.contains(event.target as Node)) {
-				setOption(undefined);
-                document.removeEventListener("mousedown", clickLocation);
-			}
-		}
-
-        document.addEventListener("mousedown", clickLocation);
-
         getChatRooms();
 
         const handleNewMessage = (message : any) => { // for real-time msg upd
@@ -149,7 +137,7 @@ export default function Chat({ socket }: { socket: Socket }) {
                                 
                                 (
                                     <div className={`flex w-full px-5 py-5 ${user?.id === msg.sender ? "justify-end" : "justify-start"}`}>
-                                        <div className="flex flex-row items-center gap-1">
+                                        <div className="flex flex-row items-center gap-1 w-full">
                                             {
                                                 user?.id !== msg.sender 
                                                 
@@ -172,12 +160,16 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                 
                                                 (
                                                     <>
-                                                        <div className={`flex flex-col items-end relative`}>
-                                                            <div className={`w-fit bg-blue-500 rounded-lg p-3 border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
-                                                                <div ref={option === msg.id ? dropdown : null} className={`${option === msg.id ? "block" : "hidden"} absolute flex flex-row border bg-gray-600 border-gray-700 top-12 right-0 gap-3 py-1 px-2`}>
-                                                                    <img src={editImg} className="h-5 cursor-pointer" onClick={() => handleEdit(msg)}/>
-                                                                    <img src={deleteImg} className="h-5 cursor-pointer" onClick={() => handleDel(msg.id)}/>
+                                                        <div className={`flex flex-col items-end w-full`}>
+                                                            <div className="max-w-[40%]">
+                                                                <div className={`relative bg-blue-500 rounded-lg p-3 break-all`} onClick={() => setOption(msg.id)}>
+                                                                    <div>{msg.message}</div>
+                                                                    <div className="">
+                                                                        <Reactions handleEdit={handleEdit} handleDel={handleDel} option={option} setOption={setOption} msg={msg}/>
+                                                                    </div>
                                                                 </div>
+                                                            </div>
+
                                                             <div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>
                                                         </div>
                                                         <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black`}>
