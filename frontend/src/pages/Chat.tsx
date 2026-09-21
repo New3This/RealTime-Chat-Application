@@ -1,6 +1,7 @@
 import axios from "axios";
+import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "../context/AuthContext";
-import { useActionState, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { type UserType } from "../context/AuthContext";
 import { type Socket } from "socket.io-client";
@@ -13,6 +14,7 @@ export interface ChatMessageType {
     id: Number;
     message: string;
     sender: string;
+    createdAt: string;
 };
 
 export default function Chat({ socket }: { socket: Socket }) {
@@ -49,10 +51,11 @@ export default function Chat({ socket }: { socket: Socket }) {
             );
 
             if (response.status === 200) {
-                const messages = response.data.messages.map(({ _id, message, sender }: any) => ({
+                const messages = response.data.messages.map(({ _id, message, sender, createdAt }: any) => ({
                     id: _id,
                     message,
                     sender,
+                    createdAt
                 }));
                 setChat(messages);
                 setEditingMessageId(null);
@@ -84,7 +87,7 @@ export default function Chat({ socket }: { socket: Socket }) {
         getChatRooms();
 
         const handleNewMessage = (message : any) => { // for real-time msg upd
-            setChat(state => [...state, { id: message._id, sender: message.sender, message: message.message }]);
+            setChat(state => [...state, { id: message._id, sender: message.sender, message: message.message, createdAt: message.createdAt }]);
         }
 
         socket.on('newMsg', handleNewMessage); // 4. picks up the msg sent to socket listening to 'newMsg' event, and runs handleNewMessage to display chat
@@ -103,34 +106,93 @@ export default function Chat({ socket }: { socket: Socket }) {
             <div className="flex flex-col w-full h-[calc(100vh-120px)]">
                     <div className="overflow-y-scroll min-h-full">
                         {chat.map((msg) => (
-                            <div key={String(msg.id)} data-id={String(msg.id)}className="flex w-full">
-                                {editingMessageId === msg.id ? (
-                                    <input
-                                        className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} w-full border-b border-b-black/25`}
-                                        value={editText} autoFocus onChange={(e) => setEditText(e.target.value)} 
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                submitEdit();
-                                            }
-                                        }}
+                            <div key={String(msg.id)} data-id={String(msg.id)} className="flex w-full">
+                                
+                                { editingMessageId === msg.id 
 
-                                        onBlur={() => { // if just click away mid-edit, reset 
-                                            setEditingMessageId(null);
-                                            setEditText("");
-                                        }}/>
-                                ) : (
+                                ?
+
+                                (
+                                    // <div className={`flex flex-col items-end relative`}>
+                                    //     <div className={`w-fit bg-blue-500 rounded-lg p-3 border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
+                                    //         <div className={`${option === msg.id ? "block" : "hidden"} absolute flex flex-row border bg-gray-600 border-gray-700 top-12 right-0 gap-3 py-1 px-2`}>
+                                    //             <img src={editImg} className="h-5 cursor-pointer" onClick={() => handleEdit(msg)}/>
+                                    //             <img src={deleteImg} className="h-5 cursor-pointer" onClick={() => handleDel(msg.id)}/>
+                                    //         </div>
+                                    //     <div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>
+                                    // </div>
+                                    // <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black`}>
+                                    //     <img src={user?.id === msg.sender ? `http://localhost:3000/images/${user.image}` : `http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
+                                    // </div>
+                                    <div className="justify-end flex flex-row w-full px-5 py-5 gap-1">
+                                        <input className={`items-end border-b border-b-black/25 p-3`} value={editText} autoFocus onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    submitEdit();
+                                                }
+                                            }}
+
+                                            onBlur={() => { // if just click away mid-edit, reset 
+                                                setEditingMessageId(null);
+                                                setEditText("");
+                                            }}/>
+                                        <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black`}>
+                                            <img src={user?.id === msg.sender ? `http://localhost:3000/images/${user.image}` : `http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
+                                        </div>
+                                    </div>
+                                )
+                                                        // <div className={`flex flex-col items-end relative`}>
+                                                        //     <div className={`w-fit bg-blue-500 rounded-lg p-3 border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
+                                                        //         <div className={`${option === msg.id ? "block" : "hidden"} absolute flex flex-row border bg-gray-600 border-gray-700 top-12 right-0 gap-3 py-1 px-2`}>
+                                                        //             <img src={editImg} className="h-5 cursor-pointer" onClick={() => handleEdit(msg)}/>
+                                                        //             <img src={deleteImg} className="h-5 cursor-pointer" onClick={() => handleDel(msg.id)}/>
+                                                        //         </div>
+                                                        //     <div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>
+                                                        // </div>
+                                                        // <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black`}>
+                                                        //     <img src={user?.id === msg.sender ? `http://localhost:3000/images/${user.image}` : `http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
+                                                        // </div>
+
+                                : 
+                                
+                                (
                                     <div className={`flex w-full px-5 py-5 ${user?.id === msg.sender ? "justify-end" : "justify-start"}`}>
-                                            <div className="flex flex-row relative">
-                                            <div className="h-10 w-10 rounded-2xl">
-                                                <img src={user?.id === msg.sender ? `http://localhost:3000/images/${user.image}` : `http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
-                                            </div>
-                                            <div className={`${user?.id === msg.sender ? "bg-blue-500" : "bg-gray-500"} rounded-lg p-3 border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
-                                            {option === msg.id && msg.sender === user?.id && (
-                                                <div className="absolute flex flex-row border bg-gray-600 border-gray-700 top-12 right-0 gap-3 py-1 px-2">
-                                                    <img src={editImg} className="h-5 cursor-pointer" onClick={() => handleEdit(msg)}/>
-                                                    <img src={deleteImg} className="h-5 cursor-pointer" onClick={() => handleDel(msg.id)}/>
-                                                </div>
-                                            )}
+                                        <div className="flex flex-row items-center gap-1">
+                                            {
+                                                user?.id !== msg.sender 
+                                                
+                                                ? 
+
+                                                (               
+                                                    <>
+                                                        <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black relative`}>
+                                                            <img src={`http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
+                                                        </div>
+                                                        <div className={`flex flex-col items-start}`}>
+                                                            <div className={`w-fit bg-gray-500 rounded-lg p-3 border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
+                                                            <div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>
+                                                        </div>
+                                                    </>                  
+    
+                                                ) 
+                                                
+                                                : 
+                                                
+                                                (
+                                                    <>
+                                                        <div className={`flex flex-col items-end relative`}>
+                                                            <div className={`w-fit bg-blue-500 rounded-lg p-3 border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
+                                                                <div className={`${option === msg.id ? "block" : "hidden"} absolute flex flex-row border bg-gray-600 border-gray-700 top-12 right-0 gap-3 py-1 px-2`}>
+                                                                    <img src={editImg} className="h-5 cursor-pointer" onClick={() => handleEdit(msg)}/>
+                                                                    <img src={deleteImg} className="h-5 cursor-pointer" onClick={() => handleDel(msg.id)}/>
+                                                                </div>
+                                                            <div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>
+                                                        </div>
+                                                        <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black`}>
+                                                            <img src={user?.id === msg.sender ? `http://localhost:3000/images/${user.image}` : `http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
+                                                        </div>
+                                                    </>
+                                                )
+                                            }
                                         </div>
                                     </div>
                                 )}
