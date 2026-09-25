@@ -1,5 +1,5 @@
 import axios from "axios";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, formatRelative } from "date-fns";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -107,7 +107,7 @@ export default function Chat({ socket }: { socket: Socket }) {
             {initialiseChat && (
             <div className="flex flex-col w-full h-[calc(100vh-120px)]">
                     <div className="overflow-y-scroll min-h-full">
-                        {chat.map((msg) => (
+                        {chat.map((msg, index, arr) => (
                             <div key={String(msg.id)} data-id={String(msg.id)} className="flex w-full">
                                 
                                 { editingMessageId === msg.id 
@@ -133,7 +133,7 @@ export default function Chat({ socket }: { socket: Socket }) {
                                     </div>
                                 )
 
-                                : 
+                                :
                                 
                                 (
                                     <div className={`flex w-full px-5 py-5 ${user?.id === msg.sender ? "justify-end" : "justify-start"}`}>
@@ -148,32 +148,61 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                         <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black relative`}>
                                                             <img src={`http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
                                                         </div>
-                                                        <div className={`flex flex-col items-start}`}>
-                                                            <div className={`w-fit bg-gray-500 rounded-lg p-3 border-b border-b-black/25`} onClick={() => setOption(msg.id)}> {msg.message} </div>
-                                                            <div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>
-                                                        </div>
-                                                    </>                  
-    
-                                                ) 
-                                                
-                                                : 
-                                                
-                                                (
-                                                    <>
-                                                        <div className={`flex flex-col items-end w-full`}>
-                                                            <div className="max-w-[40%]">
-                                                                <div className={`relative bg-blue-500 rounded-lg p-3 break-all`} onClick={() => setOption(msg.id)}>
-                                                                    <div>{msg.message}</div>
+
+                                                        <div className={`flex flex-col items-start w-full group`}>
+
+                                                            <div className="max-w-[40%] group cursor-pointer">
+                                                                <div className={`relative bg-gray-500 rounded-lg p-3 break-all`} onClick={() => setOption(msg.id)}>
+                                                                    <div className="">{msg.message}</div>
                                                                     <div className="">
                                                                         <Reactions handleEdit={handleEdit} handleDel={handleDel} option={option} setOption={setOption} msg={msg}/>
                                                                     </div>
                                                                 </div>
                                                             </div>
 
-                                                            <div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>
+                                                            <div>
+                                                                {
+                                                                    index === arr.length - 1 
+                                                                ? 
+                                                                    (<div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>) 
+                                                                : 
+                                                                    (<div className="hidden group-hover:block text-[12px]">{formatRelative(new Date(msg.createdAt), new Date())}</div>)
+                                                                }
+                                                            </div>
+
                                                         </div>
+                                                    </>                  
+    
+                                                ) 
+                                                
+                                                :
+                                                
+                                                (
+                                                    <>
+                                                        <div className={`group flex flex-col items-end w-full`}>
+
+                                                            <div className="max-w-[40%]">
+                                                                <div className={`relative bg-blue-500 rounded-lg p-3 break-all`} onClick={() => setOption(msg.id)}>
+                                                                    <div className="group cursor-pointer">{msg.message}</div>                                                                    
+                                                                    <div className="">
+                                                                        <Reactions handleEdit={handleEdit} handleDel={handleDel} option={option} setOption={setOption} msg={msg}/>
+                                                                    </div>
+                                                                </div>
+                                                            </div>    
+                                                            <div>
+                                                                {
+                                                                index === arr.length - 1 
+                                                                ? 
+                                                                (<div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>) 
+                                                                : 
+                                                                (<div className="hidden group-hover:block text-[12px]">{formatRelative(new Date(msg.createdAt), new Date())}</div>)
+                                                                }
+                                                            </div>                                             
+                                                        </div>
+
+
                                                         <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black`}>
-                                                            <img src={user?.id === msg.sender ? `http://localhost:3000/images/${user.image}` : `http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
+                                                            <img src={`http://localhost:3000/images/${user.image}`} alt="Profile"/>
                                                         </div>
                                                     </>
                                                 )
