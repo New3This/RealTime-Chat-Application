@@ -222,8 +222,6 @@ async function EditChat(req, res) {
             req.body,
             { returnDocument: 'after', runValidators: true }
         );
-
-        console.log(messageComplete);
         
         const conversationId = messageComplete.conversationId;
 
@@ -247,5 +245,52 @@ async function EditChat(req, res) {
 
 }
 
-export {Register, Login, Logout, UserInfo, Userbase, ChatMessage, ReturnChat, DeleteChat, EditChat}
+async function EmojiReaction(req, res) {
+    try {
+        const { msgId } = req.params;
+        const { emoji } = req.body;
+        const userId = req.user.id;
+
+        // check if already reacted
+        const checkMsg = await Message.findOne({
+            _id: msgId,
+            reactions: {
+                $elemMatch: {emoji, userId}, 
+            }
+        })
+
+        let identifiedMsg;
+
+        if (checkMsg) { // if has emoji, remove
+            identifiedMsg = await Message.findByIdAndUpdate(msgId,
+                {
+                    $pull: { reactions: {emoji, userId}}
+                },
+                {new: true}
+            );
+        }
+        else { // if not, add emoji
+            identifiedMsg = await Message.findByIdAndUpdate(msgId,
+                {
+                    $push: { reactions: {emoji, userId}}
+                },
+                {new: true}
+            );
+        }
+
+        if (!identifiedMsg) {
+            return res.status(500).json({message: err.message});
+        }
+
+        return res.status(200).json(identifiedMsg);
+
+        
+    }
+    catch (err) {
+        console.log(err);
+        return res.status(404).json({message: err});
+    }
+}
+
+export {Register, Login, Logout, UserInfo, Userbase, ChatMessage, ReturnChat, DeleteChat, EditChat, EmojiReaction}
 export default upload

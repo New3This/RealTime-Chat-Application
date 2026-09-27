@@ -2,12 +2,13 @@ import axios from "axios";
 import { formatDistanceToNow, formatRelative } from "date-fns";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { UNSAFE_WithComponentProps, useNavigate } from "react-router-dom";
 import { type UserType } from "../context/AuthContext";
 import { type Socket } from "socket.io-client";
 import Sidebar from "../components/Sidebar";
 import Message from "../components/Message";
 import Reactions from "../components/Reactions";
+
 
 export interface ChatMessageType {
     id: number;
@@ -24,13 +25,29 @@ export default function Chat({ socket }: { socket: Socket }) {
     const [initialiseChat, setInitialiseChat] = useState<boolean>(false);
     const [receiverId, setReceiverId] = useState("");
     const [conversationId, setConversationId] = useState("");
+    // track for rendering specific Reaction 
     const [option, setOption] = useState<number | undefined>();
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
     const [editText, setEditText] = useState("");
     const [receipientImage, setReceipientImage] = useState<String>("");
+    const [emojiView, setEmojiView] = useState<number | undefined>();
 
-   
+    // track for rendering selectedEmoji
+    const [selectedEmoji, setSelectedEmoji] = useState<any[]>([]);
+    const [selectedMsg, setSelectedMsg] = useState<number | undefined>();
 
+
+    const handleSelectedEmoji = async (emoji : any, msgId: number) => {
+        console.log(emoji);
+        emojiView && setSelectedMsg(emojiView);
+        setEmojiView(undefined);
+        setOption(undefined);
+        console.log(emoji);
+        setSelectedEmoji((prev) => [...prev, emoji.native]);
+        const response = await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji.native }, {withCredentials: true});
+        console.log(response);
+    }
+    
     const handleDel = async (msgId : number) => {
         const response = await axios.delete(`http://localhost:3000/chat/removeMsg/${msgId}`, {withCredentials: true});
         if (response.status === 200) {
@@ -42,6 +59,10 @@ export default function Chat({ socket }: { socket: Socket }) {
         setEditingMessageId(msg.id);
         setEditText(msg.message);
         setOption(undefined);
+    }
+
+    const handleEmoji = (msgId: number) => {
+        setEmojiView(msgId);
     }
 
     const submitEdit = async () => {
@@ -106,117 +127,120 @@ export default function Chat({ socket }: { socket: Socket }) {
             </div>
             {initialiseChat && (
             <div className="flex flex-col w-full h-[calc(100vh-120px)]">
-                    <div className="overflow-y-scroll min-h-full">
-                        {chat.map((msg, index, arr) => (
-                            <div key={String(msg.id)} data-id={String(msg.id)} className="flex w-full">
-                                
-                                { editingMessageId === msg.id 
+                <div className="overflow-y-scroll min-h-full">
+                    {chat.map((msg, index, arr) => (
+                        <div key={String(msg.id)} data-id={String(msg.id)} className="flex w-full">
+                            
+                            { editingMessageId === msg.id 
 
-                                ?
+                            ? // if editing msg:
 
-                                (
-          
-                                    <div className="justify-end flex flex-row w-full px-5 py-5 gap-1">
-                                        <input className={`items-end border-b border-b-black/25 p-3`} value={editText} autoFocus onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
-                                                    submitEdit();
-                                                }
-                                            }}
+                            (
+        
+                                <div className="justify-end flex flex-row w-full px-5 py-5 gap-1">
+                                    <input className={`items-end border-b border-b-black/25 p-3`} value={editText} autoFocus onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                submitEdit();
+                                            }
+                                        }}
 
-                                            onBlur={() => { // if just click away mid-edit, reset 
-                                                setEditingMessageId(null);
-                                                setEditText("");
-                                            }}/>
-                                        <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black`}>
-                                            <img src={user?.id === msg.sender ? `http://localhost:3000/images/${user.image}` : `http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
-                                        </div>
+                                        onBlur={() => { // if just click away mid-edit, reset 
+                                            setEditingMessageId(null);
+                                            setEditText("");
+                                        }}/>
+                                    <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black`}>
+                                        <img src={user?.id === msg.sender ? `http://localhost:3000/images/${user.image}` : `http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
                                     </div>
-                                )
+                                </div>
+                            )
 
-                                :
-                                
-                                (
-                                    <div className={`flex w-full px-5 py-5 ${user?.id === msg.sender ? "justify-end" : "justify-start"}`}>
-                                        <div className="flex flex-row items-center gap-1 w-full">
-                                            {
-                                                user?.id !== msg.sender 
-                                                
-                                                ? 
+                            : // if not editing msg
+                            
+                            (
+                                <div className={`flex w-full px-5 py-5 ${user?.id === msg.sender ? "justify-end" : "justify-start"}`}>
+                                    <div className="flex flex-row items-center gap-1 w-full">
+                                        {
+                                            user?.id !== msg.sender 
+                                            
+                                            ? // display received msg
 
-                                                (               
-                                                    <>
-                                                        <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black relative`}>
-                                                            <img src={`http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
-                                                        </div>
+                                            (               
+                                                <>
+                                                    <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black relative`}>
+                                                        <img src={`http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
+                                                    </div>
 
-                                                        <div className={`flex flex-col items-start w-full group`}>
+                                                    <div className={`flex flex-col items-start w-full group`}>
 
-                                                            <div className="max-w-[40%] group cursor-pointer">
-                                                                <div className={`relative bg-gray-500 rounded-lg p-3 break-all`} onClick={() => setOption(msg.id)}>
-                                                                    <div className="">{msg.message}</div>
-                                                                    <div className="">
-                                                                        <Reactions handleEdit={handleEdit} handleDel={handleDel} option={option} setOption={setOption} msg={msg}/>
-                                                                    </div>
+                                                        <div className="max-w-[40%] group cursor-pointer">
+
+                                                            <div className={`relative bg-gray-500 rounded-lg p-3 break-all`} onClick={() => setOption(msg.id)}>
+                                                                <div className="">{msg.message}</div>
+                                                                <div className="">
+                                                                    <Reactions handleEdit={handleEdit} handleDel={handleDel} selectedMsg={selectedMsg} selectedEmoji={selectedEmoji} handleSelectedEmoji={handleSelectedEmoji} emojiView={emojiView} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
                                                                 </div>
                                                             </div>
 
-                                                            <div>
-                                                                {
-                                                                    index === arr.length - 1 
-                                                                ? 
-                                                                    (<div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>) 
-                                                                : 
-                                                                    (<div className="hidden group-hover:block text-[12px]">{formatRelative(new Date(msg.createdAt), new Date())}</div>)
-                                                                }
-                                                            </div>
-
                                                         </div>
-                                                    </>                  
-    
-                                                ) 
-                                                
-                                                :
-                                                
-                                                (
-                                                    <>
-                                                        <div className={`group flex flex-col items-end w-full`}>
 
-                                                            <div className="max-w-[40%]">
-                                                                <div className={`relative bg-blue-500 rounded-lg p-3 break-all`} onClick={() => setOption(msg.id)}>
-                                                                    <div className="group cursor-pointer">{msg.message}</div>                                                                    
-                                                                    <div className="">
-                                                                        <Reactions handleEdit={handleEdit} handleDel={handleDel} option={option} setOption={setOption} msg={msg}/>
-                                                                    </div>
+                                                        <div>
+                                                            {
+                                                                index === arr.length - 1 
+                                                            ? 
+                                                                (<div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>) 
+                                                            : 
+                                                                (<div className="hidden group-hover:block text-[12px]">{formatRelative(new Date(msg.createdAt), new Date())}</div>)
+                                                            }
+                                                        </div>
+
+                                                    </div>
+                                                </>                  
+
+                                            ) 
+                                            
+                                            : // display sent msg
+                                            
+                                            (
+                                                <>
+                                                    <div className={`group flex flex-col items-end w-full`}>
+
+                                                        <div className="max-w-[40%]">
+                                                            <div className={`relative bg-blue-500 rounded-lg p-3 break-all`} onClick={() => setOption(msg.id)}>
+                                                                <div className="group cursor-pointer">{msg.message}</div>                                                                    
+                                                                <div className="">
+                                                                    <Reactions handleEdit={handleEdit} handleDel={handleDel} selectedMsg={selectedMsg} selectedEmoji={selectedEmoji} handleSelectedEmoji={handleSelectedEmoji} emojiView={emojiView} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
                                                                 </div>
                                                             </div>    
-                                                            <div>
-                                                                {
-                                                                index === arr.length - 1 
-                                                                ? 
-                                                                (<div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>) 
-                                                                : 
+                                                        </div>    
+                                                        <div>
+                                                            
+                                                            {
+                                                                index === arr.length - 1 // formatting for last msg
+                                                            ? 
+                                                                (<div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>)
+                                                            : 
                                                                 (<div className="hidden group-hover:block text-[12px]">{formatRelative(new Date(msg.createdAt), new Date())}</div>)
-                                                                }
-                                                            </div>                                             
-                                                        </div>
+                                                            }
+                                                        </div>                                             
+                                                    </div>
 
 
-                                                        <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black`}>
-                                                            <img src={`http://localhost:3000/images/${user.image}`} alt="Profile"/>
-                                                        </div>
-                                                    </>
-                                                )
-                                            }
-                                        </div>
+                                                    <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black`}>
+                                                        <img src={`http://localhost:3000/images/${user.image}`} alt="Profile"/>
+                                                    </div>
+                                                </>
+                                            )
+                                        }
                                     </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                    <div className="absolute bottom-0">
-                        <Message receiverId={receiverId} setChat={setChat}/>
-                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
                 </div>
+                <div className="absolute bottom-0">
+                    <Message receiverId={receiverId} setChat={setChat}/>
+                </div>
+            </div>
             )}
         </div>
     )

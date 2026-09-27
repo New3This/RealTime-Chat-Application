@@ -24,7 +24,11 @@ const ConversationSchema = new mongoose.Schema({
 const MessageSchema = new mongoose.Schema({
     conversationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true },
     sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    message: { type: String, required: true }    
+    message: { type: String, required: true },
+    reactions: [{
+        emoji: {type: String, required: true},
+        userId: {type: mongoose.Schema.Types.ObjectId, ref: "User", required: true}
+    }]
 }, {timestamps: true});
 
 const User = mongoose.model('User', UserSchema);
