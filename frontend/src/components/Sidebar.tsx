@@ -24,10 +24,11 @@ export default function Sidebar({setReceipientImage, chatRooms, setInitialiseCha
                 `http://localhost:3000/chat/message/receive/${recipientID}`,
                 { withCredentials: true }
             );
-            const messages = response.data.messages.map(({_id, message, sender, createdAt } : any) => ({
+            const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt } : any) => ({
                 id:_id,
                 message,
                 sender,
+                reactions,
                 createdAt
             }));
 
@@ -41,7 +42,6 @@ export default function Sidebar({setReceipientImage, chatRooms, setInitialiseCha
             });
 
             setActiveId(response.data.conversationId);
-            
             setChat(messages);
 
             const incomingConversationId = response.data.conversationId;

@@ -162,7 +162,7 @@ async function ChatMessage(req, res) { // saves messages and participants to db
     const messageCreated = await Message.create({
         conversationId: conversation._id,
         sender: senderId,
-        message: content,
+        message: content
     });
 
     io.to(conversation._id.toString()).emit('newMsg', messageCreated); // 3. sender sends messageCreated to the conversationId room, where socket listening for 'newMsg' will pick up 

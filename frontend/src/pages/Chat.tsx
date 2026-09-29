@@ -2,18 +2,24 @@ import axios from "axios";
 import { formatDistanceToNow, formatRelative } from "date-fns";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
-import { UNSAFE_WithComponentProps, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { type UserType } from "../context/AuthContext";
 import { type Socket } from "socket.io-client";
 import Sidebar from "../components/Sidebar";
 import Message from "../components/Message";
 import Reactions from "../components/Reactions";
+import data from '@emoji-mart/data';
+import Picker from '@emoji-mart/react';
 
-
+export interface ReactionType {
+    emoji: string;
+    userId: string;
+}
 export interface ChatMessageType {
     id: number;
     message: string;
     sender: string;
+    reactions?: ReactionType[];
     createdAt: string;
 };
 
@@ -33,19 +39,24 @@ export default function Chat({ socket }: { socket: Socket }) {
     const [emojiView, setEmojiView] = useState<number | undefined>();
 
     // track for rendering selectedEmoji
-    const [selectedEmoji, setSelectedEmoji] = useState<any[]>([]);
-    const [selectedMsg, setSelectedMsg] = useState<number | undefined>();
 
 
     const handleSelectedEmoji = async (emoji : any, msgId: number) => {
-        console.log(emoji);
-        emojiView && setSelectedMsg(emojiView);
+        await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji.native }, {withCredentials: true});
+        const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverId}`, { withCredentials: true }
+        );
+
+        const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt } : any) => ({
+            id:_id,
+            message,
+            sender,
+            reactions,
+            createdAt
+        }));
+
+        setChat(messages);
         setEmojiView(undefined);
         setOption(undefined);
-        console.log(emoji);
-        setSelectedEmoji((prev) => [...prev, emoji.native]);
-        const response = await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji.native }, {withCredentials: true});
-        console.log(response);
     }
     
     const handleDel = async (msgId : number) => {
@@ -110,7 +121,7 @@ export default function Chat({ socket }: { socket: Socket }) {
         getChatRooms();
 
         const handleNewMessage = (message : any) => { // for real-time msg upd
-            setChat(state => [...state, { id: message._id, sender: message.sender, message: message.message, createdAt: message.createdAt }]);
+            setChat(state => [...state, { id: message._id, sender: message.sender, message: message.message, createdAt: message.createdAt}]);
         }
 
         socket.on('newMsg', handleNewMessage); // 4. picks up the msg sent to socket listening to 'newMsg' event, and runs handleNewMessage to display chat
@@ -177,10 +188,19 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                             <div className={`relative bg-gray-500 rounded-lg p-3 break-all`} onClick={() => setOption(msg.id)}>
                                                                 <div className="">{msg.message}</div>
                                                                 <div className="">
-                                                                    <Reactions handleEdit={handleEdit} handleDel={handleDel} selectedMsg={selectedMsg} selectedEmoji={selectedEmoji} handleSelectedEmoji={handleSelectedEmoji} emojiView={emojiView} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
+                                                                    <Reactions handleEdit={handleEdit} handleDel={handleDel} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
                                                                 </div>
                                                             </div>
-
+                                                            {emojiView === msg.id && (
+                                                                <div className="absolute z-10 right-0" onClick={(e) => e.stopPropagation()}>
+                                                                    <Picker data={data} onEmojiSelect={(emoji : string) => handleSelectedEmoji(emoji, msg.id)}/>
+                                                                </div>  
+                                                            )}
+                                                            <div className="w-full flex flex-wrap justify-center row-start-1 col-start-1 z-10 translate-y-9">
+                                                                {msg.reactions?.map((reaction) => (reaction.userId === user?.id || reaction.userId === receiverId) && (
+                                                                    <div key={reaction.emoji}>{reaction.emoji}</div>
+                                                                ))}
+                                                            </div>
                                                         </div>
 
                                                         <div>
@@ -204,13 +224,25 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                 <>
                                                     <div className={`group flex flex-col items-end w-full`}>
 
-                                                        <div className="max-w-[40%]">
-                                                            <div className={`relative bg-blue-500 rounded-lg p-3 break-all`} onClick={() => setOption(msg.id)}>
-                                                                <div className="group cursor-pointer">{msg.message}</div>                                                                    
+                                                        <div className="max-w-[40%] w-fit grid grid-cols-1 grid-rows-1">
+                                                            <div className={`relative bg-blue-500 rounded-lg p-3 break-all border row-start-1 col-start-1 `} onClick={() => setOption(msg.id)}>
+                                                                <div className="relative group cursor-pointer">{msg.message}</div>
+                                                      
                                                                 <div className="">
-                                                                    <Reactions handleEdit={handleEdit} handleDel={handleDel} selectedMsg={selectedMsg} selectedEmoji={selectedEmoji} handleSelectedEmoji={handleSelectedEmoji} emojiView={emojiView} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
+                                                                    <Reactions handleEdit={handleEdit} handleDel={handleDel} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
                                                                 </div>
-                                                            </div>    
+                                                            </div>
+
+                                                            {emojiView === msg.id && (
+                                                                <div className="absolute z-10 right-0" onClick={(e) => e.stopPropagation()}>
+                                                                    <Picker data={data} onEmojiSelect={(emoji : string) => handleSelectedEmoji(emoji, msg.id)}/>
+                                                                </div>  
+                                                            )}
+                                                            <div className="w-full flex flex-wrap justify-center row-start-1 col-start-1 z-10 translate-y-9">
+                                                                {msg.reactions?.map((reaction) => (reaction.userId === user?.id || reaction.userId === receiverId) && (
+                                                                    <div key={reaction.emoji}>{reaction.emoji}</div>
+                                                                ))}
+                                                            </div>
                                                         </div>    
                                                         <div>
                                                             
@@ -221,7 +253,8 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                             : 
                                                                 (<div className="hidden group-hover:block text-[12px]">{formatRelative(new Date(msg.createdAt), new Date())}</div>)
                                                             }
-                                                        </div>                                             
+                                                        </div>    
+                                                                                                 
                                                     </div>
 
 

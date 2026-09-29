@@ -37,7 +37,6 @@ export default function Register() {
             }
         }
         catch (error) {
-            console.log("HI");
             console.log(error);
         }
 
