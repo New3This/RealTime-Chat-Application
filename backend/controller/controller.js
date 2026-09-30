@@ -251,38 +251,59 @@ async function EmojiReaction(req, res) {
         const { emoji } = req.body;
         const userId = req.user.id;
 
-        // check if already reacted
-        const checkMsg = await Message.findOne({
+        let storedReaction;
+
+        // check if message exists with emoji reaction from user
+        let UserReacted = await Message.findOne({
             _id: msgId,
             reactions: {
-                $elemMatch: {emoji, userId}, 
+                $elemMatch: {
+                    emoji: emoji,
+                    userIds: userId
+                }
             }
-        })
+        });
 
-        let identifiedMsg;
+        if (UserReacted) { // if reaction by that user exist
 
-        if (checkMsg) { // if has emoji, remove
-            identifiedMsg = await Message.findByIdAndUpdate(msgId,
-                {
-                    $pull: { reactions: {emoji, userId}}
-                },
-                {new: true}
+            // then make user unreact the emoji it has already reacted
+            storedReaction = await Message.findOneAndUpdate(
+                {_id: msgId, "reactions.emoji" : emoji}, 
+                {$pull : {"reactions.$.userIds": userId}},
+                {returnDocument: true}
             );
-        }
-        else { // if not, add emoji
-            identifiedMsg = await Message.findByIdAndUpdate(msgId,
-                {
-                    $push: { reactions: {emoji, userId}}
-                },
-                {new: true}
+
+            await Message.updateOne(
+                { _id: msgId },
+                { $pull: { reactions: { emoji: emoji, userIds: { $size: 0 } } } }
             );
         }
 
-        if (!identifiedMsg) {
-            return res.status(500).json({message: err.message});
+        else { // otherwise 
+            
+            const emojiExists = await Message.findOne({
+                _id: msgId,
+                "reactions.emoji" : emoji
+            });
+
+            if (emojiExists) { // if emoji exists, add user to reaction 
+                storedReaction = await Message.findOneAndUpdate(
+                        {_id: msgId, "reactions.emoji" : emoji},
+                        {$push : {"reactions.$.userIds" : userId}},
+                        {returnDocument: true}
+                    );
+            } 
+            else { // else create emoji and add reaction
+                storedReaction = await Message.findByIdAndUpdate(
+                        msgId,
+                        {$push : {reactions : {emoji, userIds: [userId]}}},
+                        {returnDocument: true}
+                );
+            }
+  
         }
 
-        return res.status(200).json(identifiedMsg);
+        return res.status(200).json(storedReaction);
 
         
     }
@@ -291,6 +312,7 @@ async function EmojiReaction(req, res) {
         return res.status(404).json({message: err});
     }
 }
+
 
 export {Register, Login, Logout, UserInfo, Userbase, ChatMessage, ReturnChat, DeleteChat, EditChat, EmojiReaction}
 export default upload
