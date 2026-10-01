@@ -184,23 +184,23 @@ export default function Chat({ socket }: { socket: Socket }) {
                             
                             (
                                 <div className={`flex w-full px-5 py-5 ${user?.id === msg.sender ? "justify-end" : "justify-start"}`}>
-                                    <div className="flex flex-row items-center gap-1 w-full">
+                                    <div className="flex flex-col items-start group w-full">
                                         {
                                             user?.id !== msg.sender 
                                             
                                             ? // display received msg
 
                                             (               
-                                                <>
-                                                    <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black relative`}>
+                                                <div className={`flex flex-row items-center gap-1 w-full`}>
+                                                    <div className={`flex items-center h-[67px] w-[67px] rounded-2xl bg-black`}>
                                                         <img src={`http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
                                                     </div>
 
                                                     <div className={`flex flex-col items-start w-full group`}>
 
-                                                        <div className="max-w-[40%] w-fit grid grid-cols-1 grid-rows-1 relative">
-                                                            <div className={`relative bg-gray-500 rounded-lg p-3 break-all row-start-1 col-start-1 cursor-pointer`} onClick={() => setOption(msg.id)}>
-                                                                <div className="relative group">{msg.message}</div>
+                                                        <div className="max-w-[40%] relative">
+                                                            <div className={`relative bg-gray-500 rounded-lg p-3 break-all cursor-pointer w-fit`} onClick={() => setOption(msg.id)}>
+                                                                <div className="group">{msg.message}</div>
                                                         
                                                                 <div className="">
                                                                     <Reactions handleEdit={handleEdit} handleDel={handleDel} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
@@ -212,12 +212,12 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                                     <Picker data={data} onEmojiSelect={(emoji : string) => handleSelectedEmoji(emoji, msg.id)}/>
                                                                 </div>  
                                                             )}
-                                                            <div className="w-full flex flex-wrap justify-center row-start-1 col-start-1 translate-y-9">
+                                                            <div className="flex flex-row gap-1 ">
                                                                 {msg.reactions?.filter((reaction) => (reaction.userIds?.includes(String(user?.id)) || reaction.userIds?.includes(receiverId))).map((reaction) => (
-                                                                    <>
-                                                                    <div>{reaction.userIds.length}</div>
-                                                                    <div key={reaction.emoji} className="cursor-pointer" onClick={() => unsendEmoji(msg.id, reaction.emoji)}>{reaction.emoji}</div>    
-                                                                    </>                                                                
+                                                                    <div key={reaction.emoji} className="flex flex-row items-center bg-black/10 rounded-lg p-1 text-xs mt-1">
+                                                                        <div className="cursor-pointer" onClick={() => unsendEmoji(msg.id, reaction.emoji)}>{reaction.emoji}</div>    
+                                                                        <div>{reaction.userIds.length}</div>
+                                                                    </div>                                                                
                                                                 ))}
                                                             </div>
                                                         </div>
@@ -228,24 +228,24 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                             ? 
                                                                 (<div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>) 
                                                             : 
-                                                                (<div className="hidden group-hover:block text-[12px] translate-y-2">{formatRelative(new Date(msg.createdAt), new Date())}</div>)
+                                                                (<div className="hidden group-hover:block text-[12px]">{formatRelative(new Date(msg.createdAt), new Date())}</div>)
                                                             }
                                                         </div>
 
                                                     </div>
-                                                </>                  
+                                                </div>                  
 
                                             ) 
                                             
                                             : // display sent msg
                                             
                                             (
-                                                <>
-                                                    <div className={`group flex flex-col items-end w-full`}>
+                                                <div className={`flex flex-row items-center gap-1 w-full`}>
+                                                    <div className={`flex flex-col items-end group w-full `}>
 
-                                                        <div className="max-w-[40%] w-fit grid grid-cols-1 grid-rows-1 relative">
-                                                            <div className={`bg-blue-500 rounded-lg p-3 break-all row-start-1 col-start-1 cursor-pointer`} onClick={() => setOption(msg.id)}>
-                                                                <div className="relative group">{msg.message}</div>
+                                                        <div className="max-w-[40%] relative w-full flex flex-col items-end">
+                                                            <div className={`bg-blue-500 rounded-lg p-3 break-all cursor-pointer w-fit`} onClick={() => setOption(msg.id)}>
+                                                                <div className="group">{msg.message}</div>
                                                       
                                                                 <div className="">
                                                                     <Reactions handleEdit={handleEdit} handleDel={handleDel} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
@@ -257,13 +257,16 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                                     <Picker data={data} onEmojiSelect={(emoji : string) => handleSelectedEmoji(emoji, msg.id)}/>
                                                                 </div>  
                                                             )}
-                                                            <div className="w-full flex flex-wrap justify-center row-start-1 col-start-1 translate-y-9">
+                                                            <div className="flex flex-row flex-wrap justify-end gap-1">
                                                                 {msg.reactions?.filter((reaction) => (reaction.userIds?.includes(String(user?.id)) || reaction.userIds?.includes(receiverId))).map((reaction) => (
-                                                                    <div key={reaction.emoji} className="cursor-pointer" onClick={() => unsendEmoji(msg.id, reaction.emoji)}>{reaction.emoji}</div>                                                                    
+                                                                    <div key={reaction.emoji} className="flex flex-row items-center bg-black/10 rounded-lg p-1 text-xs mt-1">
+                                                                        <div className="cursor-pointer" onClick={() => unsendEmoji(msg.id, reaction.emoji)}>{reaction.emoji}</div>    
+                                                                        <div>{reaction.userIds.length}</div>
+                                                                    </div>                                                                
                                                                 ))}
                                                             </div>
                                                         </div>    
-                                                        <div>
+                                                        <div className="mt-1">
                                                             
                                                             {
                                                                 index === arr.length - 1 // formatting for last msg
@@ -277,10 +280,10 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                     </div>
 
 
-                                                    <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black`}>
+                                                    <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border border-amber-200 bg-black`}>
                                                         <img src={`http://localhost:3000/images/${user.image}`} alt="Profile"/>
                                                     </div>
-                                                </>
+                                                </div>
                                             )
                                         }
                                     </div>
