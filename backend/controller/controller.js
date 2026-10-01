@@ -248,7 +248,8 @@ async function EditChat(req, res) {
 async function EmojiReaction(req, res) {
     try {
         const { msgId } = req.params;
-        const { emoji } = req.body;
+        const { emoji, receiverId } = req.body;
+
         const userId = req.user.id;
 
         let storedReaction;
@@ -303,8 +304,21 @@ async function EmojiReaction(req, res) {
   
         }
 
-        return res.status(200).json(storedReaction);
+        let conversation = await Conversation.findOne({ // find if conversation exists
+            chatParticipants: {$all: [userId, receiverId]} // $all finds documents where a field is an array holding every value listed in the $all array
+        });
 
+        const messages = await Message.find({conversationId: conversation._id});
+        const normalisedMessages = messages.map((msg) => ({
+            id: msg._id.toString(), 
+            message: msg.message,
+            sender: msg.sender.toString(),
+            reactions: msg.reactions,
+            createdAt: msg.createdAt
+        }))
+        io.to(conversation._id.toString()).emit('newReaction', normalisedMessages); // 3. sender sends messageCreated to the conversationId room, where socket listening for 'newMsg' will pick up 
+
+        return res.status(200).json(storedReaction);
         
     }
     catch (err) {

@@ -42,7 +42,7 @@ export default function Chat({ socket }: { socket: Socket }) {
 
 
     const handleSelectedEmoji = async (emoji : any, msgId: number) => {
-        await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji.native }, {withCredentials: true});
+        await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji.native, receiverId: receiverId }, {withCredentials: true});
         const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverId}`, { withCredentials: true }
         );
 
@@ -74,10 +74,11 @@ export default function Chat({ socket }: { socket: Socket }) {
 
     const handleEmoji = (msgId: number) => {
         setEmojiView(msgId);
+        setOption(undefined);
     }
 
     const unsendEmoji = async (msgId : number, emoji: string) => {
-        await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji }, {withCredentials: true});
+        await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji, receiverId: receiverId }, {withCredentials: true});
         const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverId}`, { withCredentials: true }
         );
 
@@ -139,10 +140,16 @@ export default function Chat({ socket }: { socket: Socket }) {
             setChat(state => [...state, { id: message._id, sender: message.sender, message: message.message, createdAt: message.createdAt}]);
         }
 
+        const handleNewReaction = (reaction : any[]) => {
+            setChat(reaction);
+        };
+
+        socket.on('newReaction', handleNewReaction); // 4. picks up the reaction sent to socket listening to 'newReaction' event, and runs handleNewReaction to display chat
         socket.on('newMsg', handleNewMessage); // 4. picks up the msg sent to socket listening to 'newMsg' event, and runs handleNewMessage to display chat
 
         return () => {
             socket.off('newMsg', handleNewMessage);
+            socket.off('newReaction', handleNewReaction);
         };
     }, [loading, user, socket, conversationId]);
 
@@ -209,7 +216,7 @@ export default function Chat({ socket }: { socket: Socket }) {
 
                                                            {emojiView === msg.id && (
                                                                 <div className="absolute left-0 z-20" onClick={(e) => e.stopPropagation()}>
-                                                                    <Picker data={data} onEmojiSelect={(emoji : string) => handleSelectedEmoji(emoji, msg.id)}/>
+                                                                    <Picker data={data} onEmojiSelect={(emoji : any) => handleSelectedEmoji(emoji, msg.id)}/>
                                                                 </div>  
                                                             )}
                                                             <div className="flex flex-row gap-1 ">
@@ -254,7 +261,7 @@ export default function Chat({ socket }: { socket: Socket }) {
 
                                                             {emojiView === msg.id && (
                                                                 <div className="absolute right-0 z-20" onClick={(e) => e.stopPropagation()}>
-                                                                    <Picker data={data} onEmojiSelect={(emoji : string) => handleSelectedEmoji(emoji, msg.id)}/>
+                                                                    <Picker data={data} onEmojiSelect={(emoji : any) => handleSelectedEmoji(emoji, msg.id)}/>
                                                                 </div>  
                                                             )}
                                                             <div className="flex flex-row flex-wrap justify-end gap-1">

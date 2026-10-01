@@ -25,7 +25,7 @@ export default function Sidebar({setReceipientImage, chatRooms, setInitialiseCha
                 { withCredentials: true }
             );
             const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt } : any) => ({
-                id:_id,
+                id: _id,
                 message,
                 sender,
                 reactions,
