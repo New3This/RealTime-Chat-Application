@@ -221,16 +221,17 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                                 </div>  
                                                             )}
                                                             <div className="flex flex-row gap-1 ">
-                                                                {msg.reactions?.filter((allReactions) => (allReactions.userIds?.includes(String(user?.id)) || allReactions.userIds?.includes(receiverUser!.id))).map((reaction) => (
+                                                                {msg.reactions?.filter((allReactions) => (allReactions.userIds?.includes(String(user!.id)) || allReactions.userIds?.includes(receiverUser!.id))).map((reaction) => (
                                                                     <div key={reaction.emoji} className="relative flex flex-col items-center">
                                                                         <div className="bg-black/10 rounded-lg p-1 text-xs mt-1 flex flex-row items-center peer">
                                                                             <div className="cursor-pointer" onClick={() => unsendEmoji(msg.id, reaction.emoji)}>{reaction.emoji}</div>    
                                                                             <div>{reaction.userIds.length}</div>
                                                                         </div>
-                                                                        <div className="absolute bottom-[30px] hidden peer-hover:flex flex-row bg-gray-800 rounded-lg p-3 text-ms text-white border border-black">
+                                                                        <div className="absolute bottom-[30px] hidden peer-hover:flex flex-row bg-gray-800 rounded-lg p-3 text-xs text-white border border-black whitespace-nowrap">
+                                                                            <div className="mr-1">Reacted by </div>
                                                                             {reaction.userIds.map((userId, index) => (
                                                                                 <div key={userId} className={`${index !== reaction.userIds.length - 1 ? "mr-1" : ""}`}>
-                                                                                    {userId === user?.id ? user?.username : receiverUser!.username}{index !== reaction.userIds.length - 1 ? ", " : ""}
+                                                                                    {userId === user!.id ? user!.username : receiverUser!.username}{index !== reaction.userIds.length - 1 ? " and" : ""}
                                                                                 </div>
                                                                             ))}
                                                                         </div>
