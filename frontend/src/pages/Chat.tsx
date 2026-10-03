@@ -140,17 +140,17 @@ export default function Chat({ socket }: { socket: Socket }) {
             setChat(state => [...state, { id: message._id, sender: message.sender, message: message.message, createdAt: message.createdAt}]);
         }
 
-        const handleNewReaction = (reaction : any[]) => {
+        const handleNewChange = (reaction : any[]) => {
             console.log("reaction received", reaction);
             setChat(reaction);
         };
 
-        socket.on('newReaction', handleNewReaction); // 4. picks up the reaction sent to socket listening to 'newReaction' event, and runs handleNewReaction to display chat
+        socket.on('newChange', handleNewChange); // 4. picks up the reaction sent to socket listening to 'newChange' event, and runs handleNewChange to display chat
         socket.on('newMsg', handleNewMessage); // 4. picks up the msg sent to socket listening to 'newMsg' event, and runs handleNewMessage to display chat
 
         return () => {
             socket.off('newMsg', handleNewMessage);
-            socket.off('newReaction', handleNewReaction);
+            socket.off('newChange', handleNewChange);
         };
     }, [loading, user, socket, conversationId]);
 

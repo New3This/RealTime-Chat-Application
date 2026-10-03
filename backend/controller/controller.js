@@ -203,7 +203,23 @@ async function ReturnChat(req, res) {
 async function DeleteChat(req, res) {
     try {
         const {msgId: id} = req.params;
+        let conversation = await Message.findById(id).select('conversationId');
         const message = await Message.findByIdAndDelete(id);
+        const messages = await Message.find({
+            conversationId: conversation.conversationId.toString()
+        });
+
+        const normalisedMessages = messages.map((msg) => ({
+            id: msg._id.toString(), // change _id to id to match frontend
+            message: msg.message,
+            sender: msg.sender.toString(),
+            reactions: msg.reactions,
+            createdAt: msg.createdAt
+        }));
+        console.log(normalisedMessages);
+        io.to(conversation.conversationId.toString()).emit('newChange', normalisedMessages); // 3. sender sends messageCreated to the conversationId room, where socket listening for 'newMsg' will pick up 
+
+
         return res.status(200).json({id: message._id});
 
     }
@@ -316,7 +332,7 @@ async function EmojiReaction(req, res) {
             reactions: msg.reactions,
             createdAt: msg.createdAt
         }))
-        io.to(conversation._id.toString()).emit('newReaction', normalisedMessages); // 3. sender sends messageCreated to the conversationId room, where socket listening for 'newMsg' will pick up 
+        io.to(conversation._id.toString()).emit('newChange', normalisedMessages); // 3. sender sends messageCreated to the conversationId room, where socket listening for 'newMsg' will pick up 
 
         return res.status(200).json(storedReaction);
         
