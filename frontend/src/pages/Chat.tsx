@@ -20,6 +20,7 @@ export interface ChatMessageType {
     message: string;
     sender: string;
     reactions?: ReactionType[];
+    isEdited: boolean;
     createdAt: string;
 };
 
@@ -46,12 +47,13 @@ export default function Chat({ socket }: { socket: Socket }) {
         const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverUser!.id}`, { withCredentials: true }
         );
 
-        const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt } : any) => ({
+        const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt, isEdited } : any) => ({
             id:_id,
             message,
             sender,
             reactions,
-            createdAt
+            createdAt,
+            isEdited
         }));
 
         setChat(messages);
@@ -96,15 +98,7 @@ export default function Chat({ socket }: { socket: Socket }) {
             const response = await axios.patch(`http://localhost:3000/chat/editMsg/${editingMessageId}`, { message: editText }, { withCredentials: true });
 
             if (response.status === 200) {
-                const messages = response.data.messages.map(({ _id, message, sender, reactions, createdAt }: any) => ({
-                    id: _id,
-                    message,
-                    sender,
-                    reactions,
-                    createdAt
-                }));
-                setChat(messages);
-                setEditingMessageId(null);
+            setEditingMessageId(null);
                 setEditText("");
             }
         } catch (err) {
@@ -133,7 +127,7 @@ export default function Chat({ socket }: { socket: Socket }) {
         getChatRooms();
 
         const handleNewMessage = (message : any) => { // for real-time msg upd
-            setChat(state => [...state, { id: message._id, sender: message.sender, message: message.message, createdAt: message.createdAt}]);
+            setChat(state => [...state, { id: message._id, sender: message.sender, message: message.message, createdAt: message.createdAt, isEdited: message.isEdited}]);
         }
 
         const handleNewChange = (reaction : any[]) => {
@@ -169,8 +163,12 @@ export default function Chat({ socket }: { socket: Socket }) {
         
                                 <div className="justify-end flex flex-row w-full px-5 py-5 gap-1">
                                     <input className={`items-end border-b border-b-black/25 p-3`} value={editText} autoFocus onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
+                                            if (e.key === 'Enter' && editText.trim() !== msg.message) {
                                                 submitEdit();
+                                            }
+                                            else if (e.key === 'Enter' && editText.trim() === msg.message || e.key === 'Escape') {
+                                                setEditingMessageId(null);
+                                                setEditText("");
                                             }
                                         }}
 
@@ -204,7 +202,7 @@ export default function Chat({ socket }: { socket: Socket }) {
 
                                                         <div className="max-w-[40%] relative">
                                                             <div className={`relative bg-gray-500 rounded-lg p-3 break-all cursor-pointer w-fit`} onClick={() => setOption(msg.id)}>
-                                                                <div className="group">{msg.message}</div>
+                                                                <div className="group">{msg.message}<span className="text-[10px] text-gray-800 ml-1">{msg.isEdited ? "(edited) " : " "}</span></div>
                                                         
                                                                 <div className="">
                                                                     <Reactions handleEdit={handleEdit} handleDel={handleDel} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
@@ -240,7 +238,7 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                             {
                                                                 index === arr.length - 1 
                                                             ? 
-                                                                (<div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>) 
+                                                                (<div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>)
                                                             : 
                                                                 (<div className="hidden group-hover:block text-[12px]">{formatRelative(new Date(msg.createdAt), new Date())}</div>)
                                                             }
@@ -259,7 +257,7 @@ export default function Chat({ socket }: { socket: Socket }) {
 
                                                         <div className="max-w-[40%] relative w-full flex flex-col items-end">
                                                             <div className={`bg-blue-500 rounded-lg p-3 break-all cursor-pointer w-fit`} onClick={() => setOption(msg.id)}>
-                                                                <div className="group">{msg.message}</div>
+                                                                <div className="group">{msg.message}<span className="text-[10px] text-gray-800 ml-1">{msg.isEdited ? "(edited) " : " "}</span></div>
                                                       
                                                                 <div className="">
                                                                     <Reactions handleEdit={handleEdit} handleDel={handleDel} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>

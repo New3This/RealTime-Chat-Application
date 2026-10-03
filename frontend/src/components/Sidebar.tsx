@@ -25,12 +25,13 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
                 `http://localhost:3000/chat/message/receive/${recipient.id}`,
                 { withCredentials: true }
             );
-            const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt } : any) => ({
+            const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt, isEdited } : any) => ({
                 id: _id,
                 message,
                 sender,
                 reactions,
-                createdAt
+                createdAt,
+                isEdited
             }));
 
             setReceipientImage(response.data.image);

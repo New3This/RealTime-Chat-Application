@@ -214,7 +214,8 @@ async function DeleteChat(req, res) {
             message: msg.message,
             sender: msg.sender.toString(),
             reactions: msg.reactions,
-            createdAt: msg.createdAt
+            createdAt: msg.createdAt,
+            isEdited: msg.isEdited
         }));
 
         io.to(conversation.conversationId.toString()).emit('newChange', normalisedMessages); // 3. sender sends updated conversation to the conversationId room, where socket listening for 'newChange' will pick up 
@@ -234,7 +235,10 @@ async function EditChat(req, res) {
 
         const messageComplete = await Message.findByIdAndUpdate(
             req.params.msgId,
-            req.body,
+            {
+                message: req.body.message,
+                isEdited: true,
+            },
             { returnDocument: 'after', runValidators: true }
         );
         
@@ -249,7 +253,8 @@ async function EditChat(req, res) {
             message: msg.message,
             sender: msg.sender.toString(),
             reactions: msg.reactions,
-            createdAt: msg.createdAt
+            createdAt: msg.createdAt,
+            isEdited: msg.isEdited
         }));
 
         io.to(conversationId.toString()).emit('newChange', normalisedMessages); // 3. sender sends updated conversation to the conversationId room, where socket listening for 'newChange' will pick up 
@@ -336,7 +341,8 @@ async function EmojiReaction(req, res) {
             message: msg.message,
             sender: msg.sender.toString(),
             reactions: msg.reactions,
-            createdAt: msg.createdAt
+            createdAt: msg.createdAt,
+            isEdited: msg.isEdited
         }))
         io.to(conversation._id.toString()).emit('newChange', normalisedMessages); // 3. sender sends messageCreated to the conversationId room, where socket listening for 'newMsg' will pick up 
 
