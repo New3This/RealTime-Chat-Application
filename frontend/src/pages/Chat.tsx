@@ -29,7 +29,7 @@ export default function Chat({ socket }: { socket: Socket }) {
     const [chatRooms, setChatRooms] = useState<UserType[] | null>([]);
     const [chat, setChat] = useState<ChatMessageType[]>([]);
     const [initialiseChat, setInitialiseChat] = useState<boolean>(false);
-    const [receiverId, setReceiverId] = useState("");
+    const [receiverUser, setReceiverUser] = useState<UserType | null>(null);
     const [conversationId, setConversationId] = useState("");
     // track for rendering specific Reaction 
     const [option, setOption] = useState<number | undefined>();
@@ -42,8 +42,8 @@ export default function Chat({ socket }: { socket: Socket }) {
 
 
     const handleSelectedEmoji = async (emoji : any, msgId: number) => {
-        await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji.native, receiverId: receiverId }, {withCredentials: true});
-        const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverId}`, { withCredentials: true }
+        await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji.native, receiverId: receiverUser!.id }, {withCredentials: true});
+        const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverUser!.id}`, { withCredentials: true }
         );
 
         const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt } : any) => ({
@@ -78,8 +78,8 @@ export default function Chat({ socket }: { socket: Socket }) {
     }
 
     const unsendEmoji = async (msgId : number, emoji: string) => {
-        await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji, receiverId: receiverId }, {withCredentials: true});
-        const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverId}`, { withCredentials: true }
+        await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji, receiverId: receiverUser!.id }, {withCredentials: true});
+        const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverUser!.id}`, { withCredentials: true }
         );
 
         const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt } : any) => ({
@@ -141,6 +141,7 @@ export default function Chat({ socket }: { socket: Socket }) {
         }
 
         const handleNewReaction = (reaction : any[]) => {
+            console.log("reaction received", reaction);
             setChat(reaction);
         };
 
@@ -156,7 +157,7 @@ export default function Chat({ socket }: { socket: Socket }) {
     return (
         <div className="bg-black/70 h-[calc(100vh-64px)] flex flex-row">
             <div>
-                <Sidebar setReceipientImage={setReceipientImage} chatRooms={chatRooms} setInitialiseChat={setInitialiseChat} socket={socket} setReceiverId={setReceiverId} setChat={setChat} setConversationId={setConversationId}/>
+                <Sidebar setReceiverUser={setReceiverUser} setReceipientImage={setReceipientImage} chatRooms={chatRooms} setInitialiseChat={setInitialiseChat} socket={socket} setChat={setChat} setConversationId={setConversationId}/>
             </div>
             {initialiseChat && (
             <div className="flex flex-col w-full h-[calc(100vh-120px)]">
@@ -220,11 +221,20 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                                 </div>  
                                                             )}
                                                             <div className="flex flex-row gap-1 ">
-                                                                {msg.reactions?.filter((reaction) => (reaction.userIds?.includes(String(user?.id)) || reaction.userIds?.includes(receiverId))).map((reaction) => (
-                                                                    <div key={reaction.emoji} className="flex flex-row items-center bg-black/10 rounded-lg p-1 text-xs mt-1">
-                                                                        <div className="cursor-pointer" onClick={() => unsendEmoji(msg.id, reaction.emoji)}>{reaction.emoji}</div>    
-                                                                        <div>{reaction.userIds.length}</div>
-                                                                    </div>                                                                
+                                                                {msg.reactions?.filter((allReactions) => (allReactions.userIds?.includes(String(user?.id)) || allReactions.userIds?.includes(receiverUser!.id))).map((reaction) => (
+                                                                    <div key={reaction.emoji} className="relative flex flex-col items-center">
+                                                                        <div className="bg-black/10 rounded-lg p-1 text-xs mt-1 flex flex-row items-center peer">
+                                                                            <div className="cursor-pointer" onClick={() => unsendEmoji(msg.id, reaction.emoji)}>{reaction.emoji}</div>    
+                                                                            <div>{reaction.userIds.length}</div>
+                                                                        </div>
+                                                                        <div className="absolute bottom-[30px] hidden peer-hover:flex flex-row bg-gray-800 rounded-lg p-3 text-ms text-white border border-black">
+                                                                            {reaction.userIds.map((userId, index) => (
+                                                                                <div key={userId} className={`${index !== reaction.userIds.length - 1 ? "mr-1" : ""}`}>
+                                                                                    {userId === user?.id ? user?.username : receiverUser!.username}{index !== reaction.userIds.length - 1 ? ", " : ""}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>                                                               
                                                                 ))}
                                                             </div>
                                                         </div>
@@ -265,11 +275,22 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                                 </div>  
                                                             )}
                                                             <div className="flex flex-row flex-wrap justify-end gap-1">
-                                                                {msg.reactions?.filter((reaction) => (reaction.userIds?.includes(String(user?.id)) || reaction.userIds?.includes(receiverId))).map((reaction) => (
-                                                                    <div key={reaction.emoji} className="flex flex-row items-center bg-black/10 rounded-lg p-1 text-xs mt-1">
-                                                                        <div className="cursor-pointer" onClick={() => unsendEmoji(msg.id, reaction.emoji)}>{reaction.emoji}</div>    
-                                                                        <div>{reaction.userIds.length}</div>
-                                                                    </div>                                                                
+
+                                                                {msg.reactions?.filter((allReactions) => (allReactions.userIds?.includes(String(user?.id)) || allReactions.userIds?.includes(receiverUser!.id))).map((reaction) => (
+                                                                    <div key={reaction.emoji} className="relative flex flex-col items-center">
+                                                                        <div className="bg-black/10 rounded-lg p-1 text-xs mt-1 flex flex-row items-center peer">
+                                                                            <div className="cursor-pointer" onClick={() => unsendEmoji(msg.id, reaction.emoji)}>{reaction.emoji}</div>    
+                                                                            <div>{reaction.userIds.length}</div>
+                                                                        </div>
+                                                                        <div className="absolute bottom-[30px] hidden peer-hover:flex flex-row bg-gray-800 rounded-lg p-3 text-xs text-white border border-black whitespace-nowrap">
+                                                                            <div className="mr-1">Reacted by </div>
+                                                                            {reaction.userIds.map((userId, index) => (
+                                                                                <div key={userId} className={`${index !== reaction.userIds.length - 1 ? "mr-1" : ""}`}>
+                                                                                    {userId === user.id ? user.username : receiverUser!.username}{index !== reaction.userIds.length - 1 ? " and" : ""}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>                                                               
                                                                 ))}
                                                             </div>
                                                         </div>    
@@ -300,7 +321,7 @@ export default function Chat({ socket }: { socket: Socket }) {
                     ))}
                 </div>
                 <div className="absolute bottom-0">
-                    <Message receiverId={receiverId} setChat={setChat}/>
+                    <Message receiverId={receiverUser!.id} setChat={setChat}/>
                 </div>
             </div>
             )}

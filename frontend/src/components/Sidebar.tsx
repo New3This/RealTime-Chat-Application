@@ -5,23 +5,24 @@ import { type ChatMessageType } from "../pages/Chat"
 import { useState } from "react";
 
 interface SidebarProps {
+    setReceiverUser: React.Dispatch<React.SetStateAction<UserType | null>>;
     setReceipientImage: React.Dispatch<React.SetStateAction<String>>;
     chatRooms: UserType[] | null;
     setInitialiseChat: React.Dispatch<React.SetStateAction<boolean>>;
     socket: Socket;
-    setReceiverId: React.Dispatch<React.SetStateAction<string>>;
     setChat: React.Dispatch<React.SetStateAction<ChatMessageType[]>>;
     setConversationId: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export default function Sidebar({setReceipientImage, chatRooms, setInitialiseChat, socket, setReceiverId, setChat, setConversationId} : SidebarProps) {
+export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms, setInitialiseChat, socket, setChat, setConversationId} : SidebarProps) {
 
     const [activeId, setActiveId] = useState(null);
-    const startChat = async (recipientID: string) => {
+
+    const startChat = async (recipient: UserType) => {
 
         try {
             const response = await axios.get(
-                `http://localhost:3000/chat/message/receive/${recipientID}`,
+                `http://localhost:3000/chat/message/receive/${recipient.id}`,
                 { withCredentials: true }
             );
             const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt } : any) => ({
@@ -33,7 +34,7 @@ export default function Sidebar({setReceipientImage, chatRooms, setInitialiseCha
             }));
 
             setReceipientImage(response.data.image);
-
+            setReceiverUser(recipient);
             setInitialiseChat((prev) => {
                 if (prev === true && activeId === response.data.conversationId) {
                     return false;
@@ -56,7 +57,6 @@ export default function Sidebar({setReceipientImage, chatRooms, setInitialiseCha
             setChat([]);
         }
 
-        setReceiverId(recipientID);
     };
     return (
             <div className="flex flex-col border w-70 bg-white/20 h-full">
@@ -70,7 +70,7 @@ export default function Sidebar({setReceipientImage, chatRooms, setInitialiseCha
                         )
                         : (
                             chatRooms?.map((person) => (
-                                <div key={person.id} onClick={() => startChat(person.id)} className="flex justify-between items-center py-8 text-center px-8 border-b border-gray-400 cursor-pointer hover:bg-gray-100/50">
+                                <div key={person.id} onClick={() => startChat(person)} className="flex justify-between items-center py-8 text-center px-8 border-b border-gray-400 cursor-pointer hover:bg-gray-100/50">
                                     <div className="text-white font-bold">{person.username}</div>
                                     <div className="h-10 w-10 rounded-2xl">
                                         <img src={`http://localhost:3000/images/${person.image}` || "s"} alt="Profile" />
