@@ -216,8 +216,8 @@ async function DeleteChat(req, res) {
             reactions: msg.reactions,
             createdAt: msg.createdAt
         }));
-        console.log(normalisedMessages);
-        io.to(conversation.conversationId.toString()).emit('newChange', normalisedMessages); // 3. sender sends messageCreated to the conversationId room, where socket listening for 'newMsg' will pick up 
+
+        io.to(conversation.conversationId.toString()).emit('newChange', normalisedMessages); // 3. sender sends updated conversation to the conversationId room, where socket listening for 'newChange' will pick up 
 
 
         return res.status(200).json({id: message._id});
@@ -231,8 +231,7 @@ async function DeleteChat(req, res) {
 
 async function EditChat(req, res) {
     try {
-        // const isSender = await Message.findById(id);
-        console.log(req.body);
+
         const messageComplete = await Message.findByIdAndUpdate(
             req.params.msgId,
             req.body,
@@ -244,14 +243,21 @@ async function EditChat(req, res) {
         const messages = await Message.find({
             conversationId: conversationId
         });
+                
+        const normalisedMessages = messages.map((msg) => ({
+            id: msg._id.toString(), // change _id to id to match frontend
+            message: msg.message,
+            sender: msg.sender.toString(),
+            reactions: msg.reactions,
+            createdAt: msg.createdAt
+        }));
+
+        io.to(conversationId.toString()).emit('newChange', normalisedMessages); // 3. sender sends updated conversation to the conversationId room, where socket listening for 'newChange' will pick up 
+
         return res.status(200).json({
             messages,
             conversationId
         });
-        
-        // else {
-        //     return res.status(401).json({message: "User is not authorised to edit"});
-        // }
 
     }
     catch (err) {

@@ -79,8 +79,7 @@ export default function Chat({ socket }: { socket: Socket }) {
 
     const unsendEmoji = async (msgId : number, emoji: string) => {
         await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji, receiverId: receiverUser!.id }, {withCredentials: true});
-        const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverUser!.id}`, { withCredentials: true }
-        );
+        const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverUser!.id}`, {withCredentials: true});
 
         const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt } : any) => ({
             id:_id,
@@ -94,17 +93,14 @@ export default function Chat({ socket }: { socket: Socket }) {
     }
     const submitEdit = async () => {
         try {
-            const response = await axios.patch(
-                `http://localhost:3000/chat/editMsg/${editingMessageId}`,
-                { message: editText },
-                { withCredentials: true }
-            );
+            const response = await axios.patch(`http://localhost:3000/chat/editMsg/${editingMessageId}`, { message: editText }, { withCredentials: true });
 
             if (response.status === 200) {
-                const messages = response.data.messages.map(({ _id, message, sender, createdAt }: any) => ({
+                const messages = response.data.messages.map(({ _id, message, sender, reactions, createdAt }: any) => ({
                     id: _id,
                     message,
                     sender,
+                    reactions,
                     createdAt
                 }));
                 setChat(messages);
