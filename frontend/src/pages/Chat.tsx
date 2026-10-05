@@ -10,6 +10,7 @@ import Message from "../components/Message";
 import Reactions from "../components/Reactions";
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
+import notificationSound from "../assets/notification.mp3";
 
 export interface ReactionType {
     emoji: string;
@@ -38,6 +39,7 @@ export default function Chat({ socket }: { socket: Socket }) {
     const [editText, setEditText] = useState("");
     const [receipientImage, setReceipientImage] = useState<String>("");
     const [emojiView, setEmojiView] = useState<number | undefined>();
+    const notificationMp3 = new Audio(notificationSound);
 
     // track for rendering selectedEmoji
 
@@ -127,6 +129,13 @@ export default function Chat({ socket }: { socket: Socket }) {
         getChatRooms();
 
         const handleNewMessage = (message : any) => { // for real-time msg upd
+            if (message.sender !== user?.id) {
+                notificationMp3.currentTime = 0; // resets sound if multiple msgs sent quickly
+                notificationMp3.play().catch((error) => {
+                    console.warn("Could not play sound:", error);
+                });
+            }
+
             setChat(state => [...state, { id: message._id, sender: message.sender, message: message.message, createdAt: message.createdAt, isEdited: message.isEdited}]);
         }
 
