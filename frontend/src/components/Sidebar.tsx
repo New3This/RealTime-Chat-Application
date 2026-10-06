@@ -2,9 +2,10 @@ import { type UserType } from "../context/AuthContext";
 import { type Socket } from "socket.io-client";
 import axios from "axios";
 import { type ChatMessageType } from "../pages/Chat"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface SidebarProps {
+    setChatRooms: React.Dispatch<React.SetStateAction<UserType[] | null>>;
     setReceiverUser: React.Dispatch<React.SetStateAction<UserType | null>>;
     setReceipientImage: React.Dispatch<React.SetStateAction<String>>;
     chatRooms: UserType[] | null;
@@ -14,9 +15,11 @@ interface SidebarProps {
     setConversationId: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms, setInitialiseChat, socket, setChat, setConversationId} : SidebarProps) {
+export default function Sidebar({setChatRooms,setReceiverUser, setReceipientImage, chatRooms, setInitialiseChat, socket, setChat, setConversationId} : SidebarProps) {
 
     const [activeId, setActiveId] = useState(null);
+    const [search, setSearch] = useState("");
+    const filteredUsers = chatRooms?.filter((user) => user.username.toLowerCase().includes(search));
 
     const startChat = async (recipient: UserType) => {
 
@@ -53,24 +56,29 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
                 socket.emit('joinConversation', incomingConversationId); // 1. send conversation id to socket looking for 'joinConversation'
                 setConversationId(incomingConversationId);
             }
-        } catch (err) {
+        } 
+        catch (err) {
             console.log(err);
             setChat([]);
         }
-
     };
+
     return (
             <div className="flex flex-col border w-70 bg-white/20 h-full">
-                <div className="flex p-4 justify-center border-gray-400">
-                    <input placeholder="Search" className="border pl-2 p-2 text-lg bg-white"></input>
+                <div className="flex p-4 justify-center border-gray-400"> 
+                    <input placeholder="Search" className="border pl-2 p-2 text-lg bg-white" onChange={(e) => {
+                        const searchTerm = e.target.value.toLowerCase();
+                        setSearch(searchTerm);
+                        
+                    }}/>
                 </div>
                 <div>
-                    {chatRooms?.length === 0
+                    {filteredUsers?.length === 0
                         ? (
                             <div className="text-white">No users available</div>
                         )
                         : (
-                            chatRooms?.map((person) => (
+                            filteredUsers?.map((person) => (
                                 <div key={person.id} onClick={() => startChat(person)} className="flex justify-between items-center py-8 text-center px-8 border-b border-gray-400 cursor-pointer hover:bg-gray-100/50">
                                     <div className="text-white font-bold">{person.username}</div>
                                     <div className="h-10 w-10 rounded-2xl">

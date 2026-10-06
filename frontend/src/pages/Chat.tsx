@@ -156,7 +156,7 @@ export default function Chat({ socket }: { socket: Socket }) {
     return (
         <div className="bg-black/70 h-[calc(100vh-64px)] flex flex-row">
             <div>
-                <Sidebar setReceiverUser={setReceiverUser} setReceipientImage={setReceipientImage} chatRooms={chatRooms} setInitialiseChat={setInitialiseChat} socket={socket} setChat={setChat} setConversationId={setConversationId}/>
+                <Sidebar setChatRooms={setChatRooms} setReceiverUser={setReceiverUser} setReceipientImage={setReceipientImage} chatRooms={chatRooms} setInitialiseChat={setInitialiseChat} socket={socket} setChat={setChat} setConversationId={setConversationId}/>
             </div>
             {initialiseChat && (
             <div className="flex flex-col w-full h-[calc(100vh-120px)]">
