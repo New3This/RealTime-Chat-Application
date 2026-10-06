@@ -6,6 +6,7 @@ export interface UserType {
     id: string;
     username: string;
     image: string | null;
+    unread?: boolean;
 }
 
 interface ChildrenType {

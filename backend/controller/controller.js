@@ -131,13 +131,48 @@ async function Userbase(req, res) { // get collection of users that exist except
         if (!users) {
             return res.status(404).json({message: "No users found"});
         }
-        const userList = users.map((user) => ({
-            id: user._id.toString(),
-            username: user.username,
-            image: user.image ?? null
+        let unreadMsgs = [];
+        
+        const stuffList = await Promise.all(users.map(async (user) => {
+            let conversationInstance = await Conversation.findOne({
+                chatParticipants: {$all: [currentID, user._id]}
+            });
+
+            const messages = await Message.find({
+                conversationId: conversationInstance._id
+            });
+
+            if (messages.length > 0) {
+                const lastMsg = await Message.findOne({conversationId: conversationInstance._id}).sort({createdAt: -1});
+                if (lastMsg.sender !== currentID && lastMsg.isRead === false) {
+                    unreadMsgs.push({
+                        id: user._id,
+                        username: user.username,
+                        image: user.image ?? null,
+                        unread: true
+                    });
+                }
+                else {
+                    unreadMsgs.push({
+                        id: user._id,
+                        username: user.username,
+                        image: user.image ?? null,
+                        unread: false
+                    });
+                }
+            }
+            else {
+                unreadMsgs.push({
+                    id: user._id,
+                    username: user.username,
+                    image: user.image ?? null,
+                    unread: false
+                });
+            }
+            return conversationInstance;
         }));
 
-        return res.status(200).json({ users: userList });
+        return res.status(200).json({users: unreadMsgs});
     }
     catch (error) {
         return res.status(400).json({message: "Error fetching users: " + error});
@@ -164,6 +199,7 @@ async function ChatMessage(req, res) { // saves messages and participants to db
         sender: senderId,
         message: content
     });
+    console.log(messageCreated);
 
     io.to(conversation._id.toString()).emit('newMsg', messageCreated); // 3. sender sends messageCreated to the conversationId room, where socket listening for 'newMsg' will pick up 
     return res.sendStatus(204);
@@ -184,10 +220,20 @@ async function ReturnChat(req, res) {
                 chatParticipants: [senderId, receiverId]
             });
         }
-
         const messages = await Message.find({
             conversationId: conversation._id
         });
+        
+        if (messages.length > 0) { // if a conversation has a msg
+            const lastMsg = await Message.findOne({conversationId: conversation._id}).sort({createdAt:-1});
+            const whoUser = await User.findById(lastMsg.sender);
+
+            if (whoUser._id.toString() !== senderId) { // they didn't send last message = unread msg
+                lastMsg.isRead = true; // update to true since they now received when msg component mounts
+                lastMsg.save();
+            }
+        }
+
 
         return res.status(200).json({
             image: user.image,
@@ -215,6 +261,7 @@ async function DeleteChat(req, res) {
             sender: msg.sender.toString(),
             reactions: msg.reactions,
             createdAt: msg.createdAt,
+            isRead: msg.isRead,
             isEdited: msg.isEdited
         }));
 
@@ -342,6 +389,7 @@ async function EmojiReaction(req, res) {
             sender: msg.sender.toString(),
             reactions: msg.reactions,
             createdAt: msg.createdAt,
+            isRead: msg.isRead,
             isEdited: msg.isEdited
         }))
         io.to(conversation._id.toString()).emit('newChange', normalisedMessages); // 3. sender sends messageCreated to the conversationId room, where socket listening for 'newMsg' will pick up 

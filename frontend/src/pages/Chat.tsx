@@ -22,6 +22,7 @@ export interface ChatMessageType {
     sender: string;
     reactions?: ReactionType[];
     isEdited: boolean;
+    isRead: boolean;
     createdAt: string;
 };
 
@@ -49,12 +50,13 @@ export default function Chat({ socket }: { socket: Socket }) {
         const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverUser!.id}`, { withCredentials: true }
         );
 
-        const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt, isEdited } : any) => ({
+        const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt, isRead, isEdited } : any) => ({
             id:_id,
             message,
             sender,
             reactions,
             createdAt,
+            isRead,
             isEdited
         }));
 
@@ -135,12 +137,10 @@ export default function Chat({ socket }: { socket: Socket }) {
                     console.warn("Could not play sound:", error);
                 });
             }
-
-            setChat(state => [...state, { id: message._id, sender: message.sender, message: message.message, createdAt: message.createdAt, isEdited: message.isEdited}]);
+            setChat(state => [...state, { id: message._id, sender: message.sender, message: message.message, createdAt: message.createdAt, isEdited: message.isEdited, isRead: message.isRead}]);
         }
 
         const handleNewChange = (reaction : any[]) => {
-            console.log("reaction received", reaction);
             setChat(reaction);
         };
 

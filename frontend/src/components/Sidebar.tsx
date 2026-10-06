@@ -28,13 +28,14 @@ export default function Sidebar({setChatRooms,setReceiverUser, setReceipientImag
                 `http://localhost:3000/chat/message/receive/${recipient.id}`,
                 { withCredentials: true }
             );
-            const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt, isEdited } : any) => ({
+            const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt, isEdited, isRead } : any) => ({
                 id: _id,
                 message,
                 sender,
                 reactions,
                 createdAt,
-                isEdited
+                isEdited,
+                isRead
             }));
 
             setReceipientImage(response.data.image);
@@ -75,12 +76,17 @@ export default function Sidebar({setChatRooms,setReceiverUser, setReceipientImag
                 <div>
                     {filteredUsers?.length === 0
                         ? (
-                            <div className="text-white">No users available</div>
+                            <div className="text-white text-center">No users available</div>
                         )
                         : (
                             filteredUsers?.map((person) => (
                                 <div key={person.id} onClick={() => startChat(person)} className="flex justify-between items-center py-8 text-center px-8 border-b border-gray-400 cursor-pointer hover:bg-gray-100/50">
-                                    <div className="text-white font-bold">{person.username}</div>
+                                    <div className="flex flex-col">
+                                        <div className="text-white font-bold">{person.username}</div>
+                                        {person.unread && (
+                                            <div className="text-white font-bold text-xs">Unread Messages</div>
+                                        )}
+                                    </div>
                                     <div className="h-10 w-10 rounded-2xl">
                                         <img src={`http://localhost:3000/images/${person.image}` || "s"} alt="Profile" />
                                     </div>
