@@ -33,7 +33,7 @@ export default function Chat({ socket }: { socket: Socket }) {
     const [chat, setChat] = useState<ChatMessageType[]>([]);
     const [initialiseChat, setInitialiseChat] = useState<boolean>(false);
     const [receiverUser, setReceiverUser] = useState<UserType | null>(null);
-    const [conversationId, setConversationId] = useState("");
+    const [conversationId, setConversationId] = useState<string | null>("");
     // track for rendering specific Reaction 
     const [option, setOption] = useState<number | undefined>();
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
@@ -146,17 +146,19 @@ export default function Chat({ socket }: { socket: Socket }) {
 
         socket.on('newChange', handleNewChange); // 4. picks up the reaction sent to socket listening to 'newChange' event, and runs handleNewChange to display chat
         socket.on('newMsg', handleNewMessage); // 4. picks up the msg sent to socket listening to 'newMsg' event, and runs handleNewMessage to display chat
+        socket.on('unreadUpdate', getChatRooms);
 
         return () => {
             socket.off('newMsg', handleNewMessage);
             socket.off('newChange', handleNewChange);
+            socket.off('unreadUpdate', getChatRooms);
         };
     }, [loading, user, socket, conversationId]);
 
     return (
         <div className="bg-black/70 h-[calc(100vh-64px)] flex flex-row">
             <div>
-                <Sidebar setChatRooms={setChatRooms} setReceiverUser={setReceiverUser} setReceipientImage={setReceipientImage} chatRooms={chatRooms} setInitialiseChat={setInitialiseChat} socket={socket} setChat={setChat} setConversationId={setConversationId}/>
+                <Sidebar setReceiverUser={setReceiverUser} setReceipientImage={setReceipientImage} chatRooms={chatRooms} setInitialiseChat={setInitialiseChat} socket={socket} setChat={setChat} setConversationId={setConversationId}/>
             </div>
             {initialiseChat && (
             <div className="flex flex-col w-full h-[calc(100vh-120px)]">

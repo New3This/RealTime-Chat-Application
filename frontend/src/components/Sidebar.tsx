@@ -5,20 +5,20 @@ import { type ChatMessageType } from "../pages/Chat"
 import { useEffect, useState } from "react";
 
 interface SidebarProps {
-    setChatRooms: React.Dispatch<React.SetStateAction<UserType[] | null>>;
     setReceiverUser: React.Dispatch<React.SetStateAction<UserType | null>>;
     setReceipientImage: React.Dispatch<React.SetStateAction<String>>;
     chatRooms: UserType[] | null;
     setInitialiseChat: React.Dispatch<React.SetStateAction<boolean>>;
     socket: Socket;
     setChat: React.Dispatch<React.SetStateAction<ChatMessageType[]>>;
-    setConversationId: React.Dispatch<React.SetStateAction<string>>;
+    setConversationId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
-export default function Sidebar({setChatRooms,setReceiverUser, setReceipientImage, chatRooms, setInitialiseChat, socket, setChat, setConversationId} : SidebarProps) {
+export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms, setInitialiseChat, socket, setChat, setConversationId} : SidebarProps) {
 
-    const [activeId, setActiveId] = useState(null);
+    const [activeId, setActiveId] = useState<number | null>(null);
     const [search, setSearch] = useState("");
+    const [incomingId, setIncomingId] = useState<number | null>(null);
     const filteredUsers = chatRooms?.filter((user) => user.username.toLowerCase().includes(search));
 
     const startChat = async (recipient: UserType) => {
@@ -28,6 +28,7 @@ export default function Sidebar({setChatRooms,setReceiverUser, setReceipientImag
                 `http://localhost:3000/chat/message/receive/${recipient.id}`,
                 { withCredentials: true }
             );
+
             const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt, isEdited, isRead } : any) => ({
                 id: _id,
                 message,
@@ -37,26 +38,31 @@ export default function Sidebar({setChatRooms,setReceiverUser, setReceipientImag
                 isEdited,
                 isRead
             }));
+            const sameChat = response.data.conversationId === activeId;
+
+            if (sameChat) {
+                socket.emit('leaveConversation', incomingId); // triggers when a user is selected in sidebar, and 'leaveConversation' in case new user (new user = new room cause new conversation)
+                setActiveId(null);
+                setConversationId(null);
+                setReceiverUser(null);
+                setChat([]);
+                setInitialiseChat(false);
+            }
+            else {
+                if (activeId !== null) { // if switching from another chat,
+                    socket.emit('leaveConversation', incomingId); // leave that cat
+                }
+                setIncomingId(response.data.conversationId);
+                socket.emit('joinConversation', response.data.conversationId); // 1. send conversation id to socket looking for 'joinConversation'
+                setActiveId(response.data.conversationId);
+                setConversationId(response.data.conversationId);
+                setReceiverUser(recipient);
+                setChat(messages);
+                setInitialiseChat(true); // open chat
+            }
 
             setReceipientImage(response.data.image);
-            setReceiverUser(recipient);
-            setInitialiseChat((prev) => {
-                if (prev === true && activeId === response.data.conversationId) {
-                    return false;
-                }
-                return true;
-            });
-
-            setActiveId(response.data.conversationId);
-            setChat(messages);
-
-            const incomingConversationId = response.data.conversationId;
-
-            if (incomingConversationId) {
-                socket.emit('leaveConversation', incomingConversationId); // triggers when a user is selected in sidebar, and 'leaveConversation' in case new user (new user = new room cause new conversation)
-                socket.emit('joinConversation', incomingConversationId); // 1. send conversation id to socket looking for 'joinConversation'
-                setConversationId(incomingConversationId);
-            }
+            
         } 
         catch (err) {
             console.log(err);

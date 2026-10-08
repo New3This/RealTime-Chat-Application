@@ -144,7 +144,7 @@ async function Userbase(req, res) { // get collection of users that exist except
 
             if (messages.length > 0) {
                 const lastMsg = await Message.findOne({conversationId: conversationInstance._id}).sort({createdAt: -1});
-                if (lastMsg.sender !== currentID && lastMsg.isRead === false) {
+                if (lastMsg.sender.toString() !== currentID.toString() && lastMsg.isRead === false) {
                     unreadMsgs.push({
                         id: user._id,
                         username: user.username,
@@ -194,14 +194,17 @@ async function ChatMessage(req, res) { // saves messages and participants to db
         });
     }
 
+    const conversationId = conversation._id.toString();
+    const receiverIsViewing = (await io.in(conversationId).fetchSockets()).some((socket) => socket.data.userId === receiverId); // checks if receiver is viewing conversation (in conversationId room)
+
     const messageCreated = await Message.create({
         conversationId: conversation._id,
         sender: senderId,
-        message: content
+        message: content,
+        isRead: receiverIsViewing // if so then they read msg by default, otherwise false
     });
-    console.log(messageCreated);
-
-    io.to(conversation._id.toString()).emit('newMsg', messageCreated); // 3. sender sends messageCreated to the conversationId room, where socket listening for 'newMsg' will pick up 
+    io.to(conversationId).emit('newMsg', messageCreated);
+    io.to('user:' + receiverId).emit('unreadUpdate');
     return res.sendStatus(204);
 }
 
@@ -220,20 +223,12 @@ async function ReturnChat(req, res) {
                 chatParticipants: [senderId, receiverId]
             });
         }
-        const messages = await Message.find({
-            conversationId: conversation._id
-        });
-        
-        if (messages.length > 0) { // if a conversation has a msg
-            const lastMsg = await Message.findOne({conversationId: conversation._id}).sort({createdAt:-1});
-            const whoUser = await User.findById(lastMsg.sender);
-
-            if (whoUser._id.toString() !== senderId) { // they didn't send last message = unread msg
-                lastMsg.isRead = true; // update to true since they now received when msg component mounts
-                lastMsg.save();
-            }
-        }
-
+        await Message.updateMany({
+            conversationId: conversation._id,
+            sender: { $ne: senderId },
+            isRead: false
+        }, { $set: { isRead: true } });
+        const messages = await Message.find({ conversationId: conversation._id });
 
         return res.status(200).json({
             image: user.image,
