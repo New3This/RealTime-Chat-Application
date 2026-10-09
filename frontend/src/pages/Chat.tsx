@@ -42,9 +42,7 @@ export default function Chat({ socket }: { socket: Socket }) {
     const [emojiView, setEmojiView] = useState<number | undefined>();
     const notificationMp3 = new Audio(notificationSound);
     const scrollRef = useRef<HTMLDivElement>(null);
-
-    // track for rendering selectedEmoji
-
+    const initialScroll = useRef(true);
 
     const handleSelectedEmoji = async (emoji : any, msgId: number) => {
         await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji.native, receiverId: receiverUser!.id }, {withCredentials: true});
@@ -124,7 +122,17 @@ export default function Chat({ socket }: { socket: Socket }) {
     }
     
     useEffect(() => {
-        if (scrollRef.current) {
+        if (!scrollRef.current) {
+            return;
+        }
+        if (scrollRef.current && initialScroll.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            initialScroll.current = false;
+            return;
+        }
+        let distanceToBottom = scrollRef.current.scrollHeight - (scrollRef.current.scrollTop + scrollRef.current.clientHeight); // calc how far from bottom
+        console.log(distanceToBottom);
+        if (distanceToBottom <= 300) { // scroll automatically to bottom if user scrolled up less than 300px from bottom of chat
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [chat])
