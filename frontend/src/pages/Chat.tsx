@@ -161,13 +161,21 @@ export default function Chat({ socket }: { socket: Socket }) {
             setChat(reaction);
         };
 
+        const handleMessagesRead = () => { // rerender the msg to be marked as read
+            setChat((messages) => messages.map((msg) =>
+                msg.sender === user?.id ? { ...msg, isRead: true } : msg
+            ));
+        };
+
         socket.on('newChange', handleNewChange); // 4. picks up the reaction sent to socket listening to 'newChange' event, and runs handleNewChange to display chat
         socket.on('newMsg', handleNewMessage); // 4. picks up the msg sent to socket listening to 'newMsg' event, and runs handleNewMessage to display chat
+        socket.on('messagesRead', handleMessagesRead);
         socket.on('unreadUpdate', getChatRooms);
 
         return () => {
             socket.off('newMsg', handleNewMessage);
             socket.off('newChange', handleNewChange);
+            socket.off('messagesRead', handleMessagesRead);
             socket.off('unreadUpdate', getChatRooms);
         };
     }, [loading, user, socket, conversationId]);
@@ -231,7 +239,6 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                         <div className="max-w-[40%] relative">
                                                             <div className={`relative bg-gray-500 rounded-lg p-3 break-all cursor-pointer w-fit`} onClick={() => setOption(msg.id)}>
                                                                 <div className="group">{msg.message}<span className="text-[10px] text-gray-800 ml-1">{msg.isEdited ? "(edited) " : " "}</span></div>
-                                                        
                                                                 <div className="">
                                                                     <Reactions handleEdit={handleEdit} handleDel={handleDel} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
                                                                 </div>
@@ -266,7 +273,9 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                             {
                                                                 index === arr.length - 1 
                                                             ? 
-                                                                (<div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>)
+                                                                (
+                                                                    <div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>
+                                                                )
                                                             : 
                                                                 (<div className="hidden group-hover:block text-[12px]">{formatRelative(new Date(msg.createdAt), new Date())}</div>)
                                                             }
@@ -322,7 +331,12 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                             {
                                                                 index === arr.length - 1 // formatting for last msg
                                                             ? 
-                                                                (<div className="text-[12px]">{formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>)
+                                                                (
+                                                                    <>
+                                                                        <div className="block group-hover:hidden text-[12px] text-[12px] text-right mr-1">{msg.isRead ? "Read" : null}</div>
+                                                                        <div className="hidden group-hover:block text-[12px]">Sent {formatDistanceToNow(new Date(msg.createdAt), {addSuffix: true})}</div>
+                                                                    </>
+                                                                )
                                                             : 
                                                                 (<div className="hidden group-hover:block text-[12px]">{formatRelative(new Date(msg.createdAt), new Date())}</div>)
                                                             }

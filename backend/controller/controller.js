@@ -223,11 +223,16 @@ async function ReturnChat(req, res) {
                 chatParticipants: [senderId, receiverId]
             });
         }
-        await Message.updateMany({
+
+        const readResult = await Message.updateMany({ // marks the msgs from other person as read
             conversationId: conversation._id,
             sender: { $ne: senderId },
             isRead: false
         }, { $set: { isRead: true } });
+
+        if (readResult.modifiedCount > 0) { // if any msg is marked as read, we re-render their msg as read in frontend
+            io.to(conversation._id.toString()).emit('messagesRead', { readerId: senderId });
+        }
         const messages = await Message.find({ conversationId: conversation._id });
 
         return res.status(200).json({
