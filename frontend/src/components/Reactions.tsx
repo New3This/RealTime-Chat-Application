@@ -43,7 +43,7 @@ export default function Reactions({handleEdit, handleDel, handleEmoji, option, s
                         <div ref={dropdown} className={`w-max absolute flex flex-row border bg-gray-600 border-gray-700 top-1 right-0 gap-3 py-1 px-2`}>
                             <img src={editImg} className="h-5 cursor-pointer" onClick={() => handleEdit(msg)}/>
                             <img src={deleteImg} className="h-5 cursor-pointer" onClick={() => handleDel(msg.id)}/>
-                            <img src={emojiImg} className="h-5 cursor-pointer" onClick={() => { handleEmoji(msg.id); }}/>
+                            <img src={emojiImg} className="h-5 cursor-pointer" onClick={() => handleEmoji(msg.id)}/>
                         </div>
                     )}
                     </div>

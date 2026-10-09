@@ -1,7 +1,7 @@
 import axios from "axios";
 import { formatDistanceToNow, formatRelative } from "date-fns";
 import { useAuth } from "../context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { type UserType } from "../context/AuthContext";
 import { type Socket } from "socket.io-client";
@@ -41,6 +41,7 @@ export default function Chat({ socket }: { socket: Socket }) {
     const [receipientImage, setReceipientImage] = useState<String>("");
     const [emojiView, setEmojiView] = useState<number | undefined>();
     const notificationMp3 = new Audio(notificationSound);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     // track for rendering selectedEmoji
 
@@ -123,10 +124,18 @@ export default function Chat({ socket }: { socket: Socket }) {
     }
     
     useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [chat])
+
+    useEffect(() => {
         if (!loading && !user) {
             navigate('/login', { replace: true });
             return;
         }
+
+        
 
         getChatRooms();
 
@@ -162,7 +171,7 @@ export default function Chat({ socket }: { socket: Socket }) {
             </div>
             {initialiseChat && (
             <div className="flex flex-col w-full h-[calc(100vh-120px)]">
-                <div className="overflow-y-scroll min-h-full">
+                <div ref={scrollRef} className="overflow-y-scroll min-h-full">
                     {chat.map((msg, index, arr) => (
                         <div key={String(msg.id)} data-id={String(msg.id)} className="flex w-full">
                             
