@@ -1,18 +1,20 @@
 import axios from "axios";
 import { useState } from "react";
-import { type ChatMessageType } from "../pages/Chat"
+import { type UserType } from "../context/AuthContext";
 
 export interface MessageProps {
-    receiverId: string;
-    setChat: React.Dispatch<React.SetStateAction<ChatMessageType[]>>;
+    receiverUser: UserType | null;
+    onTyping: () => void;
+    onStopTyping: () => void;
+    isSenderTyping: boolean;
 };
 
-export default function Message({receiverId} : MessageProps) {
+export default function Message({receiverUser, onTyping, onStopTyping, isSenderTyping} : MessageProps) {
     const [message, setMessage] = useState("");
 
     async function handleSubmit() {
         try {
-            const response = await axios.post(`http://localhost:3000/chat/message/${receiverId}`, {content: message}, {withCredentials: true});
+            const response = await axios.post(`http://localhost:3000/chat/message/${receiverUser?.id}`, {content: message}, {withCredentials: true});
             setMessage("");
         }
         catch (err) {
@@ -21,9 +23,17 @@ export default function Message({receiverId} : MessageProps) {
     }
     
     return (
-        <div className="flex flex-row flex-1 w-[calc(100vw-280px)]">
-            <input onChange={(e) => setMessage(e.target.value)} value={message} className="border bg-white p-3 flex-1 border-black" placeholder="Type Message Here"></input>
-            <button className="bg-blue-600 p-3 hover:cursor-pointer" onClick={() => handleSubmit()}>Submit</button>
-        </div>
+        <>
+            {isSenderTyping && (
+                <>            
+                {console.log(receiverUser)}
+                    <div className="text-white">{receiverUser?.username} is typing</div>
+                </>
+            )}
+            <div className="flex flex-row flex-1 w-[calc(100vw-280px)]">
+                <input onFocus={onTyping} onBlur={onStopTyping} onChange={(e) => setMessage(e.target.value)} value={message} className="border bg-white p-3 flex-1 border-black" placeholder="Type Message Here"></input>
+                <button className="bg-blue-600 p-3 hover:cursor-pointer" onClick={() => handleSubmit()}>Submit</button>
+            </div>
+        </>
     )
 }

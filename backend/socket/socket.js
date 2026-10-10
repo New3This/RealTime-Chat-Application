@@ -39,6 +39,17 @@ io.on("connection", (socket) => {
     socket.on('leaveConversation', (conversationId) => {
         socket.leave(conversationId);
     });
+
+    // [user] is typing - msg indicator
+    socket.on('userTyping', conversationId => {
+        console.log("HERE");
+        socket.to(conversationId).emit("typing", socket.data.userId);
+    });
+
+    socket.on('userNotTyping', conversationId => {
+        socket.to(conversationId).emit("stopTyping", socket.data.userId);
+    });
+
 });
 
 export {app, server, io}

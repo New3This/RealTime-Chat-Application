@@ -44,6 +44,8 @@ export default function Chat({ socket }: { socket: Socket }) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const initialScroll = useRef(true);
 
+    const [isSenderTyping, setIsSenderTyping] = useState(false);
+
     const handleSelectedEmoji = async (emoji : any, msgId: number) => {
         await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji.native, receiverId: receiverUser!.id }, {withCredentials: true});
         const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverUser!.id}`, { withCredentials: true }
@@ -131,12 +133,40 @@ export default function Chat({ socket }: { socket: Socket }) {
             return;
         }
         let distanceToBottom = scrollRef.current.scrollHeight - (scrollRef.current.scrollTop + scrollRef.current.clientHeight); // calc how far from bottom
-        console.log(distanceToBottom);
+
         if (distanceToBottom <= 300) { // scroll automatically to bottom if user scrolled up less than 300px from bottom of chat
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [chat])
 
+    
+    }, [chat]);
+
+
+    useEffect(() => {
+        let delay:any = null;
+        const handleTyping = (senderID : string) => {
+            if (senderID === receiverUser!.id) {
+                setIsSenderTyping(true);
+            }
+        }
+        const handleStopTyping = (senderID : string) => {
+            
+            if (senderID === receiverUser!.id) {
+                delay = setTimeout(() => {
+                    setIsSenderTyping(false);
+                }, 3000);
+            }
+        } 
+        socket.on("typing", handleTyping);
+        socket.on("stopTyping", handleStopTyping);
+
+        return () => {
+            socket.off("typing", handleTyping);
+            socket.off("stopTyping", handleStopTyping);
+            clearTimeout(delay);
+        }
+    }, [socket, receiverUser]);
+    
     useEffect(() => {
         if (!loading && !user) {
             navigate('/login', { replace: true });
@@ -358,7 +388,12 @@ export default function Chat({ socket }: { socket: Socket }) {
                     ))}
                 </div>
                 <div className="absolute bottom-0">
-                    <Message receiverId={receiverUser!.id} setChat={setChat}/>
+                    <Message 
+                    receiverUser    ={receiverUser} 
+                    onTyping={() => {conversationId ? socket.emit("userTyping", conversationId) : null}}
+                    onStopTyping={() => {conversationId ? socket.emit("userNotTyping", conversationId) : null}}
+                    isSenderTyping={isSenderTyping}
+                    />
                 </div>
             </div>
             )}
