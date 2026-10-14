@@ -219,7 +219,7 @@ export default function Chat({ socket }: { socket: Socket }) {
             <div className="flex flex-col w-full h-[calc(100vh-120px)]">
                 <div ref={scrollRef} className="overflow-y-scroll min-h-full">
                     {chat.map((msg, index, arr) => (
-                        <div key={String(msg.id)} data-id={String(msg.id)} className="flex w-full">
+                        <div key={String(msg.id)} data-id={String(msg.id)} className="flex w-full whitespace-pre-wrap">
                             
                             { editingMessageId === msg.id 
 
@@ -228,13 +228,23 @@ export default function Chat({ socket }: { socket: Socket }) {
                             (
         
                                 <div className="justify-end flex flex-row w-full px-5 py-5 gap-1">
-                                    <input className={`items-end border-b border-b-black/25 p-3`} value={editText} autoFocus onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => {
+                                    <textarea className={`items-end border-b border-b-black/25 p-3`} value={editText} autoFocus onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => {
                                             if (e.key === 'Enter' && editText.trim() !== msg.message) {
-                                                submitEdit();
+                                                if (e.shiftKey) {
+                                                    return;
+                                                }
+                                                else {
+                                                    submitEdit();
+                                                }
                                             }
                                             else if (e.key === 'Enter' && editText.trim() === msg.message || e.key === 'Escape') {
-                                                setEditingMessageId(null);
-                                                setEditText("");
+                                                if (e.shiftKey) {
+                                                    return;
+                                                }
+                                                else {
+                                                    setEditingMessageId(null);
+                                                    setEditText("");
+                                                }
                                             }
                                         }}
 
