@@ -19,6 +19,7 @@ export interface ReactionType {
 export interface ChatMessageType {
     id: number;
     message: string;
+    image?: string;
     sender: string;
     reactions?: ReactionType[];
     isEdited: boolean;
@@ -51,9 +52,10 @@ export default function Chat({ socket }: { socket: Socket }) {
         const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverUser!.id}`, { withCredentials: true }
         );
 
-        const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt, isRead, isEdited } : any) => ({
+        const messages = response.data.messages.map(({_id, message, image, sender, reactions, createdAt, isRead, isEdited } : any) => ({
             id:_id,
             message,
+            image,
             sender,
             reactions,
             createdAt,
@@ -88,9 +90,10 @@ export default function Chat({ socket }: { socket: Socket }) {
         await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji, receiverId: receiverUser!.id }, {withCredentials: true});
         const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverUser!.id}`, {withCredentials: true});
 
-        const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt } : any) => ({
+        const messages = response.data.messages.map(({_id, message, image, sender, reactions, createdAt } : any) => ({
             id:_id,
             message,
+            image,
             sender,
             reactions,
             createdAt
@@ -184,7 +187,7 @@ export default function Chat({ socket }: { socket: Socket }) {
                     console.warn("Could not play sound:", error);
                 });
             }
-            setChat(state => [...state, { id: message._id, sender: message.sender, message: message.message, createdAt: message.createdAt, isEdited: message.isEdited, isRead: message.isRead}]);
+            setChat(state => [...state, { id: message._id, sender: message.sender, message: message.message, image: message.image, createdAt: message.createdAt, isEdited: message.isEdited, isRead: message.isRead}]);
         }
 
         const handleNewChange = (reaction : any[]) => {
@@ -278,7 +281,8 @@ export default function Chat({ socket }: { socket: Socket }) {
 
                                                         <div className="max-w-[40%] relative">
                                                             <div className={`relative bg-gray-500 rounded-lg p-3 break-all cursor-pointer w-fit`} onClick={() => setOption(msg.id)}>
-                                                                <div className="group">{msg.message}<span className="text-[10px] text-gray-800 ml-1">{msg.isEdited ? "(edited) " : " "}</span></div>
+                                                                {msg.image && <img src={msg.image} alt="chat-img" className="mb-2 max-h-64 max-w-full rounded object-contain" />}
+                                                                {msg.message && <div className="group">{msg.message}<span className="text-[10px] text-gray-800 ml-1">{msg.isEdited ? "(edited) " : " "}</span></div>}
                                                                 <div className="">
                                                                     <Reactions handleEdit={handleEdit} handleDel={handleDel} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
                                                                 </div>
@@ -334,7 +338,8 @@ export default function Chat({ socket }: { socket: Socket }) {
 
                                                         <div className="max-w-[40%] relative w-full flex flex-col items-end">
                                                             <div className={`bg-blue-500 rounded-lg p-3 break-all cursor-pointer w-fit`} onClick={() => setOption(msg.id)}>
-                                                                <div className="group">{msg.message}<span className="text-[10px] text-gray-800 ml-1">{msg.isEdited ? "(edited) " : " "}</span></div>
+                                                                {msg.image && <img src={msg.image} alt="chat-img" className="mb-2 max-h-64 max-w-full rounded object-contain" />}
+                                                                {msg.message && <div className="group">{msg.message}<span className="text-[10px] text-gray-800 ml-1">{msg.isEdited ? "(edited) " : " "}</span></div>}
                                                       
                                                                 <div className="">
                                                                     <Reactions handleEdit={handleEdit} handleDel={handleDel} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>

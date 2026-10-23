@@ -1,20 +1,49 @@
-import multer from 'multer'
 import {User} from '../model/model.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { Conversation, Message } from '../model/model.js'
 import { io } from '../socket/socket.js'
+import cloudinary from '../config/cloudinary.js';
+import { unlink } from 'node:fs/promises';
 
-const storage = multer.diskStorage({
-    destination: function(req, file, cb) {
-        cb(null, 'images/')
-    },
-    filename: function(req, file, cb) {
-        cb(null, Date.now() + '-' + file.originalname)
+const extractURL = (imageUrl) => {
+    if (!imageUrl) return null;
+    try {
+        // https://res.cloudinary.com/dylancloudstore/image/upload/v1782630691/store-products/kbssggtpophr85oftrbq.png
+        const parts = imageUrl.split('/');
+        // [
+        //   'https:',
+        //   '',
+        //   'res.cloudinary.com',
+        //   'dylancloudstore',
+        //   'image',
+        //   'upload',
+        //   'v1782630691',     
+        //   'store-products',  
+        //   'kbssggtpophr85oftrbq.png'
+        // ]
+        const uploadIndex = parts.indexOf('upload');
+
+
+        if (uploadIndex === -1) return null;
+        const publicId = parts.slice(uploadIndex + 2).join('/').split('.')[0];
+        // slice
+        // 'store-products',  
+        // 'kbssggtpophr85oftrbq.png'
+
+        // join
+        // Result: 'store-products/kbssggtpophr85oftrbq.png'
+
+        // split
+        // store-products/kbssggtpophr85oftrbq
+
+        return publicId;    
+    } 
+    catch (error) {
+        console.error('Error extracting public_id:', error);
+        return null;
     }
-})
-
-const upload = multer({ storage: storage })
+};
 
 async function Register(req, res) {
     try {
@@ -133,10 +162,20 @@ async function Userbase(req, res) { // get collection of users that exist except
         }
         let unreadMsgs = [];
         
-        const stuffList = await Promise.all(users.map(async (user) => {
+        await Promise.all(users.map(async (user) => {
             let conversationInstance = await Conversation.findOne({
                 chatParticipants: {$all: [currentID, user._id]}
             });
+
+            if (!conversationInstance) {
+                unreadMsgs.push({
+                    id: user._id,
+                    username: user.username,
+                    image: user.image ?? null,
+                    unread: false
+                });
+                return;
+            }
 
             const messages = await Message.find({
                 conversationId: conversationInstance._id
@@ -182,30 +221,63 @@ async function Userbase(req, res) { // get collection of users that exist except
 async function ChatMessage(req, res) { // saves messages and participants to db
     const {receiverId} = req.params;
     const senderId = req.user.id;
-    const {content} = req.body;
+    const messageContent = req.body.messageContent?.trim() || ''; // if no msg sent, message is empty string
 
-    let conversation = await Conversation.findOne({ // find if conversation exists
-        chatParticipants: {$all: [senderId, receiverId]} // $all finds documents where a field is an array holding every value listed in the $all array
-    });
-
-    if (!conversation) {
-        conversation = await Conversation.create({
-            chatParticipants: [senderId, receiverId]
-        });
+    if (!messageContent && !req.file) { // if msg empty string and no file
+        return res.status(400).json({message: 'A message or image is required'}); // error
     }
 
-    const conversationId = conversation._id.toString();
-    const receiverIsViewing = (await io.in(conversationId).fetchSockets()).some((socket) => socket.data.userId === receiverId); // checks if receiver is viewing conversation (in conversationId room)
+    try {
+        let imageUrl;
+        if (req.file) {
+            try {
+                const uploadedImage = await cloudinary.uploader.upload(req.file.path, {
+                    folder: 'chat-application/messages',
+                    transformation: [{quality: 'auto'}]
+                });
+                imageUrl = uploadedImage.secure_url;
+            } catch (error) {
+                console.error('Cloudinary message image upload failed:', error);
+                return res.status(502).json({message: 'Failed to upload message image'});
+            } finally {
+                try {
+                    await unlink(req.file.path);
+                } catch (error) {
+                    console.error('Failed to remove image from local storage:', error);
+                }
+            }
+        }
 
-    const messageCreated = await Message.create({
-        conversationId: conversation._id,
-        sender: senderId,
-        message: content,
-        isRead: receiverIsViewing // if so then they read msg by default, otherwise false
-    });
-    io.to(conversationId).emit('newMsg', messageCreated);
-    io.to('user:' + receiverId).emit('unreadUpdate');
-    return res.sendStatus(204);
+        let conversation = await Conversation.findOne({
+            chatParticipants: {$all: [senderId, receiverId]}
+        });
+
+        if (!conversation) {
+            conversation = await Conversation.create({
+                chatParticipants: [senderId, receiverId]
+            });
+        }
+
+        const conversationId = conversation._id.toString();
+        const receiverIsViewing = (await io.in(conversationId).fetchSockets())
+            .some((socket) => socket.data.userId === receiverId);
+
+        const messageCreated = await Message.create({
+            conversationId: conversation._id,
+            sender: senderId,
+            message: messageContent,
+            image: imageUrl,
+            isRead: receiverIsViewing
+        });
+
+        io.to(conversationId).emit('newMsg', messageCreated);
+        io.to(`user:${receiverId}`).emit('unreadUpdate');
+
+        return res.sendStatus(204);
+    } catch (error) {
+        console.error('Failed to save chat message:', error);
+        return res.status(500).json({message: 'Failed to save chat message'});
+    }
 }
 
 async function ReturnChat(req, res) {
@@ -386,6 +458,7 @@ async function EmojiReaction(req, res) {
         const normalisedMessages = messages.map((msg) => ({
             id: msg._id.toString(), 
             message: msg.message,
+            image: msg.image,
             sender: msg.sender.toString(),
             reactions: msg.reactions,
             createdAt: msg.createdAt,
@@ -405,4 +478,3 @@ async function EmojiReaction(req, res) {
 
 
 export {Register, Login, Logout, UserInfo, Userbase, ChatMessage, ReturnChat, DeleteChat, EditChat, EmojiReaction}
-export default upload

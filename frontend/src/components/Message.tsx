@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { type UserType } from "../context/AuthContext";
 
 export interface MessageProps {
@@ -11,12 +11,25 @@ export interface MessageProps {
 
 export default function Message({receiverUser, onTyping, onStopTyping, isSenderTyping} : MessageProps) {
     const [message, setMessage] = useState("");
-
+    const [image, setImage] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     async function handleSubmit() {
+        if (!receiverUser || (!message.trim() && !image)) {
+            return;
+        }
+
         try {
-            const messageSent = message;
-            const response = await axios.post(`http://localhost:3000/chat/message/${receiverUser?.id}`, {content: messageSent}, {withCredentials: true});
+            const formData = new FormData();
+            formData.append('messageContent', message.trim());
+            if (image) {
+                formData.append('fileContent', image);
+            }
+            await axios.post(`http://localhost:3000/chat/message/${receiverUser.id}`, formData, {withCredentials: true});
             setMessage("");
+            setImage(null);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
         }
         catch (err) {
             console.log(err);
@@ -42,6 +55,10 @@ export default function Message({receiverUser, onTyping, onStopTyping, isSenderT
                         }
                     }
                 }}/>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => {setImage(e.target.files?.[0] ?? null)}} />
+                {image && (
+                    <img src={URL.createObjectURL(image)} alt="preview" className="w-40 h-40 object-cover"/>
+                )}
                 <button className="bg-blue-600 p-3 hover:cursor-pointer" onClick={() => handleSubmit()}>Submit</button>
             </div>
         </>

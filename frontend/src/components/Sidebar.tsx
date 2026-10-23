@@ -2,7 +2,7 @@ import { type UserType } from "../context/AuthContext";
 import { type Socket } from "socket.io-client";
 import axios from "axios";
 import { type ChatMessageType } from "../pages/Chat"
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface SidebarProps {
     setReceiverUser: React.Dispatch<React.SetStateAction<UserType | null>>;
@@ -29,9 +29,10 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
                 { withCredentials: true }
             );
 
-            const messages = response.data.messages.map(({_id, message, sender, reactions, createdAt, isEdited, isRead } : any) => ({
+            const messages = response.data.messages.map(({_id, message, image, sender, reactions, createdAt, isEdited, isRead } : any) => ({
                 id: _id,
                 message,
+                image,
                 sender,
                 reactions,
                 createdAt,
@@ -105,5 +106,3 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
             </div>
     )
 }
-
-

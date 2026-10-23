@@ -1,6 +1,7 @@
 import authenticate from "../middleware/authenticate.js";
 import { UserInfo, Userbase, ChatMessage, ReturnChat, DeleteChat, EditChat, EmojiReaction} from "../controller/controller.js";
 import express from 'express';
+import {handleUpload} from "../middleware/upload.js";
 
 const router = express.Router();
 
@@ -10,7 +11,7 @@ router.get('/user', UserInfo);
 
 router.get('/userbase', Userbase);
 
-router.post('/message/:receiverId', ChatMessage);
+router.post('/message/:receiverId', handleUpload, ChatMessage);
 
 router.get('/message/receive/:receiverId', ReturnChat);
 
