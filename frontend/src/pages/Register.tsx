@@ -23,7 +23,7 @@ export default function Register() {
         const formData = new FormData();
         formData.append('username', username);
         formData.append('password', password);
-        file && formData.append('file', file);
+        file && formData.append('fileContent', file);
 
         try {
            const response = await axios.post<{ user: UserType }>('http://localhost:3000/api/auth/register', formData, { withCredentials: true });   

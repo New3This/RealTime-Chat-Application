@@ -95,7 +95,7 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
                                         )}
                                     </div>
                                     <div className="h-10 w-10 rounded-2xl">
-                                        <img src={`http://localhost:3000/images/${person.image}` || "s"} alt="Profile" />
+                                        <img src={`${person.image}` || "s"} alt="Profile" />
                                     </div>
                                 </div>
                             ))

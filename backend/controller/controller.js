@@ -50,6 +50,27 @@ async function Register(req, res) {
         const {username, password} = req.body;
         const file = req.file;
 
+        let imageUrl;
+
+        if (file) {
+            try {
+                const uploadedImage = await cloudinary.uploader.upload(file.path, {
+                    folder: 'chat-application/pfp',
+                    transformation: [{quality: 'auto'}]
+                });
+                imageUrl = uploadedImage.secure_url;
+            } catch (error) {
+                console.error('Cloudinary message image upload failed:', error);
+                return res.status(502).json({message: 'Failed to upload message image'});
+            } finally {
+                try {
+                    await unlink(file.path);
+                } catch (error) {
+                    console.error('Failed to remove image from local storage:', error);
+                }
+            }
+        }
+
         const user = await User.findOne({username});
         if (user) {
             return res.status(400).json({message: "User already exists"});
@@ -60,7 +81,7 @@ async function Register(req, res) {
         const generateUser = await User.create({
             username,
             password: hashedPassword,
-            image: file?.filename
+            image: imageUrl ?? null
         });
         const token = jwt.sign({id: generateUser._id, username: generateUser.username}, process.env.JWT_SECRET, {expiresIn: '3d'});
 
