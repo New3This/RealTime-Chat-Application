@@ -23,19 +23,19 @@ export default function Navbar() {
     }
 
     return (
-        <div className="flex flex-row justify-between align-middle px-30 py-5 bg-amber-50">
-            <div className="hover:cursor-pointer" onClick={() => navigate("/home")}>RealTime Chat</div>
+        <div className="flex flex-row items-center justify-between gap-4 bg-amber-50 px-4 py-5 sm:px-8 lg:px-30">
+            <div className="hover:cursor-pointer text-[15px] md:text-[25px] sm:text-[20px]" onClick={() => navigate("/")}>RealTime Chat</div>
             <div className="flex flex-row justify-end gap-3">
                 {user ? (
                     <>
-                        <div onClick={() => navigate('/chat')} className="hover:cursor-pointer">Chat</div>
-                        <div className='hover:cursor-pointer' onClick={handleLogout}>Logout</div>
+                        <div onClick={() => navigate('/chat')} className="hover:cursor-pointer text-[15px] md:text-[25px] sm:text-[20px]">Chat</div>
+                        <div className='hover:cursor-pointer text-[15px] md:text-[25px] sm:text-[20px]' onClick={handleLogout}>Logout</div>
                     </>
 
                 ) : (
                     <>
-                        <div onClick={() => navigate('/login')} className="hover:cursor-pointer">Login</div>
-                        <div onClick={() => navigate('/register')} className="hover:cursor-pointer">Signup</div>
+                        <div onClick={() => navigate('/login')} className="hover:cursor-pointer text-[15px] md:text-[25px] md:px-5 sm:text-[20px]">Login</div>
+                        <div onClick={() => navigate('/register')} className="hover:cursor-pointer text-[15px] md:text-[25px] sm:text-[20px]">Signup</div>
                     </>
                 )}
             </div>

@@ -214,13 +214,13 @@ export default function Chat({ socket }: { socket: Socket }) {
     }, [loading, user, socket, conversationId]);
 
     return (
-        <div className="bg-black/70 h-[calc(100vh-64px)] flex flex-row">
-            <div>
+        <div className="flex h-full flex-row overflow-hidden bg-black/70">
+            <div className="h-full shrink-0">
                 <Sidebar setReceiverUser={setReceiverUser} setReceipientImage={setReceipientImage} chatRooms={chatRooms} setInitialiseChat={setInitialiseChat} socket={socket} setChat={setChat} setConversationId={setConversationId}/>
             </div>
             {initialiseChat && (
-            <div className="flex flex-col w-full h-[calc(100vh-120px)]">
-                <div ref={scrollRef} className="overflow-y-scroll min-h-full">
+            <div className="flex flex-1 flex-col">
+                <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden">
                     {chat.map((msg, index, arr) => (
                         <div key={String(msg.id)} data-id={String(msg.id)} className="flex w-full whitespace-pre-wrap">
                             
@@ -402,7 +402,7 @@ export default function Chat({ socket }: { socket: Socket }) {
                         </div>
                     ))}
                 </div>
-                <div className="absolute bottom-0">
+                <div className="w-full shrink-0">
                     <Message 
                     receiverUser    ={receiverUser} 
                     onTyping={() => {conversationId ? socket.emit("userTyping", conversationId) : null}}

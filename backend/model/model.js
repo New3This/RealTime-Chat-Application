@@ -24,7 +24,7 @@ const ConversationSchema = new mongoose.Schema({
 const MessageSchema = new mongoose.Schema({
     conversationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true },
     sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    message: { type: String, required: () => !this.image }, // if message includes image, then no need text
+    message: { type: String, required: function () { return !this.image; } }, // if message includes image, then no need text
     image: {
         type: String
     },
