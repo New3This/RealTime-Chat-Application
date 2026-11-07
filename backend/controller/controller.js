@@ -176,60 +176,36 @@ async function Userbase(req, res) { // get collection of users that exist except
         const currentID = req.user.id;
         const users = await User.find({
             _id: { $ne: currentID }
-        });
+        }).sort({ username: 1 });
 
         if (!users) {
             return res.status(404).json({message: "No users found"});
         }
-        let unreadMsgs = [];
-        
-        await Promise.all(users.map(async (user) => {
-            let conversationInstance = await Conversation.findOne({
+        const unreadMsgs = await Promise.all(users.map(async (user) => {
+            const userSummary = {
+                id: user._id,
+                username: user.username,
+                image: user.image ?? null,
+                unread: false
+            };
+            const conversationInstance = await Conversation.findOne({
                 chatParticipants: {$all: [currentID, user._id]}
             });
 
             if (!conversationInstance) {
-                unreadMsgs.push({
-                    id: user._id,
-                    username: user.username,
-                    image: user.image ?? null,
-                    unread: false
-                });
-                return;
+                return userSummary;
             }
 
-            const messages = await Message.find({
+            // if last msg exists, does not belong to logged-in user, and is not read <==> unread is true
+            const lastMsg = await Message.findOne({
                 conversationId: conversationInstance._id
-            });
-
-            if (messages.length > 0) {
-                const lastMsg = await Message.findOne({conversationId: conversationInstance._id}).sort({createdAt: -1});
-                if (lastMsg.sender.toString() !== currentID.toString() && lastMsg.isRead === false) {
-                    unreadMsgs.push({
-                        id: user._id,
-                        username: user.username,
-                        image: user.image ?? null,
-                        unread: true
-                    });
-                }
-                else {
-                    unreadMsgs.push({
-                        id: user._id,
-                        username: user.username,
-                        image: user.image ?? null,
-                        unread: false
-                    });
-                }
-            }
-            else {
-                unreadMsgs.push({
-                    id: user._id,
-                    username: user.username,
-                    image: user.image ?? null,
-                    unread: false
-                });
-            }
-            return conversationInstance;
+            }).sort({createdAt: -1});
+            userSummary.unread = Boolean(
+                lastMsg &&
+                lastMsg.sender.toString() !== currentID.toString() &&
+                !lastMsg.isRead
+            );
+            return userSummary;
         }));
 
         return res.status(200).json({users: unreadMsgs});
