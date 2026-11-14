@@ -7,7 +7,6 @@ import { AuthProvider, useAuth } from "./context/AuthContext.tsx";
 import Navbar from "./components/Navbar";
 import io from "socket.io-client";
 import { useEffect } from "react";
-import Test from "./pages/Test";
 
 const socket = io("http://localhost:3000", { withCredentials: true, autoConnect: false });
 
@@ -29,16 +28,13 @@ function AppContent() {
 
   return (
     <BrowserRouter>
-      <div className="flex h-dvh flex-col">
         <Navbar/>
           <Routes>
             <Route path="/login" element={<Login/>}/>
             <Route path="/register" element={<Register/>}/>
             <Route path="/" element={<Home/>}/>
-            <Route path="/test" element={<Test/>}/>
             <Route path="/chat" element={<Chat socket={socket}/>}/>
           </Routes>
-      </div>
     </BrowserRouter>
   )
 }

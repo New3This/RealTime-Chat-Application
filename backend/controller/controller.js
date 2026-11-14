@@ -327,6 +327,7 @@ async function DeleteChat(req, res) {
         const normalisedMessages = messages.map((msg) => ({
             id: msg._id.toString(), // change _id to id to match frontend
             message: msg.message,
+            image: msg.image,
             sender: msg.sender.toString(),
             reactions: msg.reactions,
             createdAt: msg.createdAt,
@@ -367,6 +368,7 @@ async function EditChat(req, res) {
         const normalisedMessages = messages.map((msg) => ({
             id: msg._id.toString(), // change _id to id to match frontend
             message: msg.message,
+            image: msg.image,
             sender: msg.sender.toString(),
             reactions: msg.reactions,
             createdAt: msg.createdAt,

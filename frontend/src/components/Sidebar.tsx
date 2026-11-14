@@ -94,8 +94,8 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
                                             <div className="text-white font-bold text-xs">Unread Messages</div>
                                         )}
                                     </div>
-                                    <div className="h-10 w-10 rounded-2xl">
-                                        <img src={`${person.image}` || "s"} alt="Profile" />
+                                    <div className="size-[clamp(40px,5vw,64px)] overflow-hidden rounded-full">
+                                        <img src={`${person.image}`} alt="Profile" className="h-full w-full object-cover"/>
                                     </div>
                                 </div>
                             ))

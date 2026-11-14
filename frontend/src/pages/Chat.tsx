@@ -231,7 +231,7 @@ export default function Chat({ socket }: { socket: Socket }) {
                             (
         
                                 <div className="justify-end flex flex-row w-full px-5 py-5 gap-1">
-                                    <textarea className={`items-end border-b border-b-black/25 p-3`} value={editText} autoFocus onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => {
+                                    <textarea className={`items-end border-b border-b-black/25 p-3 m-3`} value={editText} autoFocus onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => {
                                             if (e.key === 'Enter' && editText.trim() !== msg.message) {
                                                 if (e.shiftKey) {
                                                     return;
@@ -255,8 +255,8 @@ export default function Chat({ socket }: { socket: Socket }) {
                                             setEditingMessageId(null);
                                             setEditText("");
                                         }}/>
-                                    <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border bg-black`}>
-                                        <img src={user?.id === msg.sender ? `http://localhost:3000/images/${user.image}` : `http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
+                                    <div className={`size-[clamp(40px,5vw,64px)] overflow-hidden rounded-full`}>
+                                        <img src={user?.id === msg.sender ? `${user.image}` : `${receipientImage}`} alt="Profile" className={`h-full w-full object-cover`}/>
                                     </div>
                                 </div>
                             )
@@ -264,7 +264,7 @@ export default function Chat({ socket }: { socket: Socket }) {
                             : // if not editing msg
                             
                             (
-                                <div className={`flex w-full px-5 py-5 ${user?.id === msg.sender ? "justify-end" : "justify-start"}`}>
+                                <div className={`flex w-full px-5 py-2 ${user?.id === msg.sender ? "justify-end" : "justify-start"}`}>
                                     <div className="flex flex-col items-start group w-full">
                                         {
                                             user?.id !== msg.sender 
@@ -273,20 +273,18 @@ export default function Chat({ socket }: { socket: Socket }) {
 
                                             (               
                                                 <div className={`flex flex-row items-center gap-1 w-full`}>
-                                                    <div className={`flex items-center h-[67px] w-[67px] rounded-2xl bg-black`}>
-                                                        <img src={`http://localhost:3000/images/${receipientImage}`} alt="Profile"/>
+                                                    <div className={`size-[clamp(40px,5vw,64px)] overflow-hidden rounded-full mr-3`}>
+                                                        <img src={`${receipientImage}`} alt="Profile" className="h-full w-full object-cover"/>
                                                     </div>
 
                                                     <div className={`flex flex-col items-start w-full group`}>
 
-                                                        <div className="max-w-[40%] relative">
-                                                            <div className={`relative bg-gray-500 rounded-lg p-3 break-all cursor-pointer w-fit`} onClick={() => setOption(msg.id)}>
+                                                        <div className="relative w-fit max-w-[40%]">
+                                                            <div className={`relative bg-gray-500 rounded-lg p-2 break-all cursor-pointer w-fit`} onClick={() => setOption(msg.id)}>
                                                                 {msg.image && <img src={msg.image} alt="chat-img" className="mb-2 max-h-64 max-w-full rounded object-contain" />}
-                                                                {msg.message && <div className="group">{msg.message}<span className="text-[10px] text-gray-800 ml-1">{msg.isEdited ? "(edited) " : " "}</span></div>}
-                                                                <div className="">
-                                                                    <Reactions handleEdit={handleEdit} handleDel={handleDel} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
-                                                                </div>
+                                                                {msg.message && <div className="group text-center">{msg.message}{msg.isEdited && <span className="ml-1 text-[10px] text-gray-800">(edited)</span>}</div>}
                                                             </div>
+                                                            <Reactions handleEdit={handleEdit} handleDel={handleDel} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
 
                                                            {emojiView === msg.id && (
                                                                 <div className="absolute left-0 z-20" onClick={(e) => e.stopPropagation()}>
@@ -337,14 +335,11 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                     <div className={`flex flex-col items-end group w-full `}>
 
                                                         <div className="max-w-[40%] relative w-full flex flex-col items-end">
-                                                            <div className={`bg-blue-500 rounded-lg p-3 break-all cursor-pointer w-fit`} onClick={() => setOption(msg.id)}>
+                                                            <div className={`bg-blue-500 rounded-lg p-2 break-all cursor-pointer w-fit`} onClick={() => setOption(msg.id)}>
                                                                 {msg.image && <img src={msg.image} alt="chat-img" className="mb-2 max-h-64 max-w-full rounded object-contain" />}
-                                                                {msg.message && <div className="group">{msg.message}<span className="text-[10px] text-gray-800 ml-1">{msg.isEdited ? "(edited) " : " "}</span></div>}
-                                                      
-                                                                <div className="">
-                                                                    <Reactions handleEdit={handleEdit} handleDel={handleDel} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
-                                                                </div>
+                                                                {msg.message && <div className="group text-center">{msg.message}{msg.isEdited && <span className="ml-1 text-[10px] text-gray-800">(edited)</span>}</div>}
                                                             </div>
+                                                            <Reactions handleEdit={handleEdit} handleDel={handleDel} handleEmoji={handleEmoji} option={option} setOption={setOption} msg={msg}/>
 
                                                             {emojiView === msg.id && (
                                                                 <div className="absolute right-0 z-20" onClick={(e) => e.stopPropagation()}>
@@ -390,8 +385,8 @@ export default function Chat({ socket }: { socket: Socket }) {
                                                     </div>
 
 
-                                                    <div className={`flex items-center h-[67px] w-[67px] rounded-2xl border border-amber-200 bg-black`}>
-                                                        <img src={`http://localhost:3000/images/${user.image}`} alt="Profile"/>
+                                                    <div className={`size-[clamp(40px,5vw,64px)] overflow-hidden rounded-full ml-3`}>
+                                                        <img src={`${user.image}`} alt="Profile" className="w-full h-full object-cover"/>
                                                     </div>
                                                 </div>
                                             )
