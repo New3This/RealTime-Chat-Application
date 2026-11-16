@@ -72,7 +72,7 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
     };
 
     return (
-            <div className="flex flex-col border w-70 bg-white/20 h-full">
+            <div className="flex flex-col border w-70 bg-white/20 h-[calc(100dvh-63px)] overflow-y-auto">
                 <div className="flex p-4 justify-center border-gray-400"> 
                     <input placeholder="Search" className="border pl-2 p-2 text-lg bg-white" onChange={(e) => {
                         const searchTerm = e.target.value.toLowerCase();

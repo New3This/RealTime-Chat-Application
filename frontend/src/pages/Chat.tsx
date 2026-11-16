@@ -214,13 +214,13 @@ export default function Chat({ socket }: { socket: Socket }) {
     }, [loading, user, socket, conversationId]);
 
     return (
-        <div className="flex h-full flex-row overflow-hidden bg-black/70">
-            <div className="h-full shrink-0">
+        <div className="flex flex-row overflow-hidden bg-black/70 h-[calc(100dvh-63px)]">
+            <div>
                 <Sidebar setReceiverUser={setReceiverUser} setReceipientImage={setReceipientImage} chatRooms={chatRooms} setInitialiseChat={setInitialiseChat} socket={socket} setChat={setChat} setConversationId={setConversationId}/>
             </div>
             {initialiseChat && (
-            <div className="flex flex-1 flex-col">
-                <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden">
+            <div className="flex min-h-0 flex-1 flex-col">
+                <div ref={scrollRef} className="flex-1 overflow-y-auto">
                     {chat.map((msg, index, arr) => (
                         <div key={String(msg.id)} data-id={String(msg.id)} className="flex w-full whitespace-pre-wrap">
                             
