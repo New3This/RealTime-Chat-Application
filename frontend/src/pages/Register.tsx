@@ -9,7 +9,7 @@ export default function Register() {
     const [password, setPassword] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const { user, setUser } = useAuth();
-
+    const [errors, setErrors] = useState<string[]>([]);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -37,7 +37,12 @@ export default function Register() {
             }
         }
         catch (error) {
-            console.log(error);
+            if (axios.isAxiosError<{ message?: string | string[] }>(error)) {
+                const message = error.response?.data?.message;
+                setErrors(Array.isArray(message) ? message : [message || "Cannot register user"]);
+            } else {
+                setErrors(["Cannot register user"]);
+            }
         }
 
 
@@ -46,7 +51,7 @@ export default function Register() {
     return (
         
         <form onSubmit={handleSubmit} className="flex justify-center">
-            <div className="flex flex-col gap-3">
+            <div className="flex min-w-sm max-w-sm flex-col gap-3">
                 <div  className="flex flex-col">
                     <label className="text-lg">Username: </label>
                     <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" className="border border-black pl-2 py-2 text-lg"></input>
@@ -56,7 +61,9 @@ export default function Register() {
                     <label className="text-lg">Password: </label>
                     <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="border border-black pl-2 py-2 text-lg"></input>
                 </div>
-
+                {errors.map((message, index) => (
+                    <div key={`${index}-${message}`} className="text-red-500">{message}</div>
+                ))}
                 <div>
                     <input 
                     type="file" 

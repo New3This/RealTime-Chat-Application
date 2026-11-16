@@ -15,6 +15,27 @@ const UserSchema = new mongoose.Schema({
     }
 });
 
+UserSchema.statics.validatePassword = function(password) {
+    if (!/^(?=.*[A-Za-z])(?=.*\d).{6,}$/.test(password)) {
+        return { 
+            isValid: false, 
+            message: 'Password must be at least 6 characters, with at least one number and letter' 
+        };
+    }
+
+    return {isValid: true};
+}
+
+UserSchema.statics.validateUsername = function(username) {
+    if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
+        return { 
+            isValid: false, 
+            message: 'Username must be between 3 and 16 characters' 
+        };
+    }
+
+    return {isValid: true};
+}
 const ConversationSchema = new mongoose.Schema({
     chatParticipants: [
         {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true,}

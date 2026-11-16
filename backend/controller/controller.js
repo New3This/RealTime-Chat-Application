@@ -48,9 +48,27 @@ const extractURL = (imageUrl) => {
 async function Register(req, res) {
     try {
         const {username, password} = req.body;
+        const validatePassword = User.validatePassword(password);
+        const validateUsername = User.validateUsername(username);
+
+        const error = [];
         const file = req.file;
 
         let imageUrl;
+        
+        if (!validatePassword.isValid) {
+            if (file) await unlink(file.path).catch(() => {});
+            error.push(validatePassword.message);
+        }
+
+        if (!validateUsername.isValid) {
+            if (file) await unlink(file.path).catch(() => {});
+            error.push(validateUsername.message);
+        }
+        if (error.length > 0) {
+            return res.status(400).json({message: error});
+        }
+
 
         if (file) {
             try {
