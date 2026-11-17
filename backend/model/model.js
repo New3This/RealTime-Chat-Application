@@ -27,10 +27,10 @@ UserSchema.statics.validatePassword = function(password) {
 }
 
 UserSchema.statics.validateUsername = function(username) {
-    if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
+    if (!/^[a-zA-Z0-9_]{3,8}$/.test(username)) {
         return { 
             isValid: false, 
-            message: 'Username must be between 3 and 16 characters' 
+            message: 'Username must be between 3 and 8 characters' 
         };
     }
 

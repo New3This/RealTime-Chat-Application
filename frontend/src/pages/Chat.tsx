@@ -147,6 +147,7 @@ export default function Chat({ socket }: { socket: Socket }) {
 
     useEffect(() => {
         let delay:any = null;
+        
         const handleTyping = (senderID : string) => {
             if (senderID === receiverUser!.id) {
                 setIsSenderTyping(true);
@@ -256,7 +257,10 @@ export default function Chat({ socket }: { socket: Socket }) {
                                             setEditText("");
                                         }}/>
                                     <div className={`size-[clamp(40px,5vw,64px)] overflow-hidden rounded-full`}>
-                                        <img src={user?.id === msg.sender ? `${user.image}` : `${receipientImage}`} alt="Profile" className={`h-full w-full object-cover`}/>
+                                        <img src={user?.id === msg.sender ? 
+                                            (user.image === null ? "https://res.cloudinary.com/ncshgoxl/image/upload/v1794890477/no-profile-picture-15257.svg" :`${user.image}`)
+                                            :
+                                            (receipientImage === null ? "https://res.cloudinary.com/ncshgoxl/image/upload/v1794890477/no-profile-picture-15257.svg" : `${receipientImage}`)} alt="Profile" className={`h-full w-full object-cover`}/>
                                     </div>
                                 </div>
                             )

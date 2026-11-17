@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 
 const app = express();
 const server = http.createServer(app);
-
+const onlineUsers = new Map();
 const io = new Server(server, {
     cors: {
         origin: process.env.FRONTEND_URL,
@@ -27,10 +27,17 @@ io.use((socket, next) => {
     }
 })
 
+
 io.on("connection", (socket) => {
     console.log("user joined", socket.id);
     socket.join(`user:${socket.data.userId}`);
 
+
+    const currentlyOnline = onlineUsers.get(socket.data.userId) || 0;
+    onlineUsers.set(socket.data.userId, currentlyOnline + 1);
+    socket.join('onlineUsersRoom'); // join onlineUsersRoom to broadcast online users
+    io.to("onlineUsersRoom").emit("updateOnlineUsers", Array.from(onlineUsers.keys()));
+    
     socket.on('joinConversation', (conversationId) => { // 2. listen for joinConversation and join the room
         socket.join(conversationId); // where receiver/sender socket joins room
         console.log('joined room:', conversationId);
@@ -48,6 +55,22 @@ io.on("connection", (socket) => {
 
     socket.on('userNotTyping', conversationId => {
         socket.to(conversationId).emit("stopTyping", socket.data.userId);
+    });
+
+    socket.on('disconnect', () => {
+        const currentConnections = onlineUsers.get(socket.data.userId) || 0;
+
+        if (currentConnections <= 1) {
+            // Last tab closed: remove user completely
+            onlineUsers.delete(socket.data.userId);
+        } 
+        else {
+            // Still open in other tabs: just decrease the count
+            onlineUsers.set(socket.data.userId, currentConnections - 1);
+        }
+
+        io.to("onlineUsersRoom").emit("updateOnlineUsers", Array.from(onlineUsers.keys()));
+        
     });
 
 });

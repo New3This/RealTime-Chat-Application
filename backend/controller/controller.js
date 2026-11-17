@@ -218,6 +218,7 @@ async function Userbase(req, res) { // get collection of users that exist except
             const lastMsg = await Message.findOne({
                 conversationId: conversationInstance._id
             }).sort({createdAt: -1});
+
             userSummary.unread = Boolean(
                 lastMsg &&
                 lastMsg.sender.toString() !== currentID.toString() &&
@@ -274,8 +275,7 @@ async function ChatMessage(req, res) { // saves messages and participants to db
         }
 
         const conversationId = conversation._id.toString();
-        const receiverIsViewing = (await io.in(conversationId).fetchSockets())
-            .some((socket) => socket.data.userId === receiverId);
+        const receiverIsViewing = (await io.in(conversationId).fetchSockets()).some((socket) => socket.data.userId === receiverId);
 
         const messageCreated = await Message.create({
             conversationId: conversation._id,
