@@ -19,14 +19,24 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
 
 
     useEffect(() => {
-        socket.on('updateOnlineUsers', (users: string[]) => {
+        const handleOnlineUsers = (users: string[]) => {
             setOnlineUsers(users);
-        });
+        };
+        const requestOnlineUsers = () => {
+            socket.emit('requestOnlineUsers');
+        };
 
+        socket.on('updateOnlineUsers', handleOnlineUsers);
 
+        socket.on('connect', requestOnlineUsers); // checks for reconnections
+
+        if (socket.connected) { // checks for initial connection
+            requestOnlineUsers();
+        }
 
         return () => {
-            socket.off('updateOnlineUsers');
+            socket.off('updateOnlineUsers', handleOnlineUsers);
+            socket.off('connect', requestOnlineUsers);
         };
     }, [socket]);
 
@@ -85,8 +95,6 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
     };
 
     return (
-        <>
-            {console.log(onlineUsers)}
             <div className="flex flex-col border w-70 bg-white/30 h-[calc(100dvh-63px)] overflow-y-auto">
                 <div className="flex p-4 justify-center border-gray-400"> 
                     <input placeholder="Search" className="border pl-2 p-2 text-lg bg-white" onChange={(e) => {
@@ -95,6 +103,7 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
                         
                     }}/>
                 </div>
+                {onlineUsers.length <= 1 ? <div className="text-center font-medium bg-green-300"> 1 Person is Online (You) </div> : <div className="text-center font-medium bg-green-300"> {onlineUsers.length} people are online </div>}
                 <div>
                     {filteredUsers?.length === 0
                         ? (
@@ -105,7 +114,7 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
                                 <div key={person.id} onClick={() => startChat(person)} className="flex justify-between items-center py-8 text-center px-8 border-b border-gray-400 cursor-pointer hover:bg-gray-100/50">
                                     <div className="flex flex-col">
                                         <div className="flex flex-row items-center gap-2">
-                                            <div className={onlineUsers.includes(person.id) ? "bg-green-500 w-2 h-2 rounded-full" : "bg-red-500 w-2 h-2 rounded-full"}></div>
+                                            <div className={onlineUsers.includes(String(person.id)) ? "bg-green-500 w-2 h-2 rounded-full" : "bg-red-500 w-2 h-2 rounded-full"}></div>
                                             <div className="text-white font-bold">{person.username}</div>
                                         </div>
                                         {person.unread && (
@@ -122,6 +131,5 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
                     }
                 </div>
             </div>
-            </>
     )
 }

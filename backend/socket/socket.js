@@ -34,10 +34,16 @@ io.on("connection", (socket) => {
 
 
     const currentlyOnline = onlineUsers.get(socket.data.userId) || 0;
-    onlineUsers.set(socket.data.userId, currentlyOnline + 1);
-    socket.join('onlineUsersRoom'); // join onlineUsersRoom to broadcast online users
-    io.to("onlineUsersRoom").emit("updateOnlineUsers", Array.from(onlineUsers.keys()));
+    onlineUsers.set(socket.data.userId, currentlyOnline + 1); // add user socket id to online user map
+    socket.join('onlineUsersRoom'); // online user room
+    io.to("onlineUsersRoom").emit("updateOnlineUsers", Array.from(onlineUsers.keys())); 
+    // send the map to everyone in this room, so that the frontend can update the total user count (done by emitting "updateOnlineUsers" event which sidebar listens for)
     
+    socket.on('requestOnlineUsers', () => {
+        socket.emit("updateOnlineUsers", Array.from(onlineUsers.keys()));
+    });
+
+
     socket.on('joinConversation', (conversationId) => { // 2. listen for joinConversation and join the room
         socket.join(conversationId); // where receiver/sender socket joins room
         console.log('joined room:', conversationId);
