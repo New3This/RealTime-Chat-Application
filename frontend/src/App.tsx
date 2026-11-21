@@ -7,8 +7,12 @@ import { AuthProvider, useAuth } from "./context/AuthContext.tsx";
 import Navbar from "./components/Navbar";
 import io from "socket.io-client";
 import { useEffect } from "react";
+import { API_URL } from "./config";
 
-const socket = io("http://localhost:3000", { withCredentials: true, autoConnect: false });
+const socket = io(API_URL || window.location.origin, {
+  withCredentials: true,
+  autoConnect: false
+});
 
 function AppContent() {
   const { user, loading } = useAuth();
