@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useNavigate } from "react-router-dom";
 import {useAuth} from "../context/AuthContext";
 import { type UserType } from "../context/AuthContext";
+import { API_URL } from "../config";
 
 export default function Register() {
     const [username, setUsername] = useState("");
@@ -26,7 +27,7 @@ export default function Register() {
         file && formData.append('fileContent', file);
 
         try {
-           const response = await axios.post<{ user: UserType }>('http://localhost:3000/api/auth/register', formData, { withCredentials: true });   
+           const response = await axios.post<{ user: UserType }>(`${API_URL}/api/auth/register`, formData, { withCredentials: true });
             if (response.status === 201) {
                 setUser({
                     id: response.data.user.id,
