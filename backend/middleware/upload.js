@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'node:crypto';
 
-const uploadFolder = process.env.UPLOAD_DIR || (process.env.VERCEL ? '/tmp/images' : path.resolve('images'));
+const uploadFolder = process.env.UPLOAD_DIR || path.resolve('images');
 
 if (!fs.existsSync(uploadFolder)) {
     fs.mkdirSync(uploadFolder, { recursive: true });

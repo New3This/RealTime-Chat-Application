@@ -2,8 +2,6 @@ import { Server } from 'socket.io';
 import http from 'http';
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { createAdapter } from '@socket.io/redis-adapter';
-import { createClient } from 'redis';
 
 const app = express();
 const server = http.createServer(app);
@@ -31,11 +29,10 @@ io.use((socket, next) => {
         const user = jwt.verify(token, process.env.JWT_SECRET);
         socket.data.userId = user.id;
         return next();
-    }
-    catch {
+    } catch {
         return next(new Error('Invalid or expired token'));
     }
-})
+});
 
 async function getOnlineUserIds() {
     const sockets = await io.in('onlineUsersRoom').fetchSockets();
@@ -46,26 +43,8 @@ async function broadcastOnlineUsers() {
     io.to('onlineUsersRoom').emit('updateOnlineUsers', await getOnlineUserIds());
 }
 
-export async function initializeSocket() {
-    const redisUrl = process.env.REDIS_URL;
-    if (!redisUrl) {
-        if (process.env.VERCEL) {
-            throw new Error('No redis for Vercel');
-        }
-        return;
-    }
-
-    const publisher = createClient({ url: redisUrl });
-    const subscriber = publisher.duplicate();
-    publisher.on('error', (error) => console.error('Redis publisher error:', error));
-    subscriber.on('error', (error) => console.error('Redis subscriber error:', error));
-
-    await Promise.all([publisher.connect(), subscriber.connect()]);
-    io.adapter(createAdapter(publisher, subscriber));
-}
-
-io.on("connection", (socket) => {
-    console.log("user joined", socket.id);
+io.on('connection', (socket) => {
+    console.log('user joined', socket.id);
     const roomsJoined = Promise.all([
         socket.join(`user:${socket.data.userId}`),
         socket.join('onlineUsersRoom')
@@ -74,7 +53,7 @@ io.on("connection", (socket) => {
     roomsJoined.then(broadcastOnlineUsers).catch((error) => {
         console.error('Failed to broadcast online users:', error);
     });
-    
+
     socket.on('requestOnlineUsers', async () => {
         try {
             await roomsJoined;
@@ -83,7 +62,6 @@ io.on("connection", (socket) => {
             console.error('Failed to fetch online users:', error);
         }
     });
-
 
     socket.on('joinConversation', async (conversationId) => {
         try {
@@ -102,13 +80,13 @@ io.on("connection", (socket) => {
     });
 
     // [user] is typing - msg indicator
-    socket.on('userTyping', conversationId => {
-        console.log("HERE");
-        socket.to(conversationId).emit("typing", socket.data.userId);
+    socket.on('userTyping', (conversationId) => {
+        console.log('HERE');
+        socket.to(conversationId).emit('typing', socket.data.userId);
     });
 
-    socket.on('userNotTyping', conversationId => {
-        socket.to(conversationId).emit("stopTyping", socket.data.userId);
+    socket.on('userNotTyping', (conversationId) => {
+        socket.to(conversationId).emit('stopTyping', socket.data.userId);
     });
 
     socket.on('disconnect', () => {
@@ -116,7 +94,6 @@ io.on("connection", (socket) => {
             console.error('Failed to broadcast online users:', error);
         });
     });
-
 });
 
-export {app, server, io}
+export { app, server, io };

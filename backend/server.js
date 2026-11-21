@@ -8,7 +8,7 @@ import cookieParser from 'cookie-parser'
 import connectDB from './db/connection.js'
 import authentication from './routes/authentication.js'
 import chat from './routes/chat.js'
-import { app, server, initializeSocket } from './socket/socket.js'
+import { app, server } from './socket/socket.js'
 
 const frontendDistPath = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
@@ -40,14 +40,11 @@ app.use(async (req, res, next) => {
 app.use('/api/auth', authentication);
 app.use('/chat', chat);
 
-await initializeSocket();
+const port = Number(process.env.PORT) || 3000;
+server.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});
 
-if (!process.env.VERCEL) {
-    const port = Number(process.env.PORT) || 3000;
-    server.listen(port, () => {
-        console.log(`Server is running on port ${port}`);
-    });
-}
 
 export { app, server };
 export default server;
