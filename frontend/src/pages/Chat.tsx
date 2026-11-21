@@ -11,6 +11,7 @@ import Reactions from "../components/Reactions";
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
 import notificationSound from "../assets/notification.mp3";
+import { API_URL } from "../config";
 
 export interface ReactionType {
     emoji: string;
@@ -48,8 +49,8 @@ export default function Chat({ socket }: { socket: Socket }) {
     const [isSenderTyping, setIsSenderTyping] = useState(false);
 
     const handleSelectedEmoji = async (emoji : any, msgId: number) => {
-        await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji.native, receiverId: receiverUser!.id }, {withCredentials: true});
-        const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverUser!.id}`, { withCredentials: true }
+        await axios.patch(`${API_URL}/chat/msg/${msgId}`, { emoji: emoji.native, receiverId: receiverUser!.id }, {withCredentials: true});
+        const response = await axios.get(`${API_URL}/chat/message/receive/${receiverUser!.id}`, { withCredentials: true }
         );
 
         const messages = response.data.messages.map(({_id, message, image, sender, reactions, createdAt, isRead, isEdited } : any) => ({
@@ -69,7 +70,7 @@ export default function Chat({ socket }: { socket: Socket }) {
     }
     
     const handleDel = async (msgId : number) => {
-        const response = await axios.delete(`http://localhost:3000/chat/removeMsg/${msgId}`, {withCredentials: true});
+        const response = await axios.delete(`${API_URL}/chat/removeMsg/${msgId}`, {withCredentials: true});
         if (response.status === 200) {
             setChat((prev) => prev.filter((msg) => msg.id !== response.data.id));
         }
@@ -87,8 +88,8 @@ export default function Chat({ socket }: { socket: Socket }) {
     }
 
     const unsendEmoji = async (msgId : number, emoji: string) => {
-        await axios.patch(`http://localhost:3000/chat/msg/${msgId}`, { emoji: emoji, receiverId: receiverUser!.id }, {withCredentials: true});
-        const response = await axios.get(`http://localhost:3000/chat/message/receive/${receiverUser!.id}`, {withCredentials: true});
+        await axios.patch(`${API_URL}/chat/msg/${msgId}`, { emoji: emoji, receiverId: receiverUser!.id }, {withCredentials: true});
+        const response = await axios.get(`${API_URL}/chat/message/receive/${receiverUser!.id}`, {withCredentials: true});
 
         const messages = response.data.messages.map(({_id, message, image, sender, reactions, createdAt } : any) => ({
             id:_id,
@@ -103,7 +104,7 @@ export default function Chat({ socket }: { socket: Socket }) {
     }
     const submitEdit = async () => {
         try {
-            const response = await axios.patch(`http://localhost:3000/chat/editMsg/${editingMessageId}`, { message: editText }, { withCredentials: true });
+            const response = await axios.patch(`${API_URL}/chat/editMsg/${editingMessageId}`, { message: editText }, { withCredentials: true });
 
             if (response.status === 200) {
             setEditingMessageId(null);
@@ -116,7 +117,7 @@ export default function Chat({ socket }: { socket: Socket }) {
 
     const getChatRooms = async () => {
       try {
-            const response = await axios.get<{users: UserType[]}>('http://localhost:3000/chat/userbase', {withCredentials: true});
+            const response = await axios.get<{users: UserType[]}>(`${API_URL}/chat/userbase`, {withCredentials: true});
             if (response.status === 200) {
                 setChatRooms(response.data.users);
             } 
@@ -170,6 +171,21 @@ export default function Chat({ socket }: { socket: Socket }) {
             clearTimeout(delay);
         }
     }, [socket, receiverUser]);
+
+    useEffect(() => {
+        const joinCurrentConversation = () => {
+            if (conversationId) {
+                socket.emit('joinConversation', conversationId);
+            }
+        };
+
+        socket.on('connect', joinCurrentConversation);
+        joinCurrentConversation();
+
+        return () => {
+            socket.off('connect', joinCurrentConversation);
+        };
+    }, [socket, conversationId]);
     
     useEffect(() => {
         if (!loading && !user) {

@@ -6,7 +6,7 @@ function Home() {
     const [previewOpen, setPreviewOpen] = useState(false);
 
     useEffect(() => {
-        function handleKeyDown(e) {
+        function handleKeyDown(e: KeyboardEvent) {
             if (e.key === "Escape") {
                 setPreviewOpen(false);
             }

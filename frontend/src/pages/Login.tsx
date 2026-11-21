@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { type UserType } from "../context/AuthContext";
+import { API_URL } from "../config";
 
 export default function Login() {
     const [username, setUsername] = useState("");
@@ -25,7 +26,7 @@ export default function Login() {
 
         setErrors([]);
         try {
-           const response = await axios.post<{user : UserType}>('http://localhost:3000/api/auth/login', {username, password}, { withCredentials: true });
+           const response = await axios.post<{user : UserType}>(`${API_URL}/api/auth/login`, {username, password}, { withCredentials: true });
             if (response.status === 202) {
                 setUser({
                     id: response.data.user.id,

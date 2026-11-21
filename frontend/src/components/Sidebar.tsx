@@ -3,6 +3,7 @@ import { type Socket } from "socket.io-client";
 import axios from "axios";
 import { type ChatMessageType } from "../pages/Chat"
 import { useState, useEffect } from "react";
+import { API_URL } from "../config";
 
 interface SidebarProps {
     setReceiverUser: React.Dispatch<React.SetStateAction<UserType | null>>;
@@ -50,7 +51,7 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
         
         try {
 
-            const response = await axios.get(`http://localhost:3000/chat/message/receive/${recipient.id}`, { withCredentials: true });
+            const response = await axios.get(`${API_URL}/chat/message/receive/${recipient.id}`, { withCredentials: true });
 
             const messages = response.data.messages.map(({_id, message, image, sender, reactions, createdAt, isEdited, isRead } : any) => ({
                 id: _id,
@@ -77,7 +78,6 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
                     socket.emit('leaveConversation', incomingId); // leave that cat
                 }
                 setIncomingId(response.data.conversationId);
-                socket.emit('joinConversation', response.data.conversationId); // 1. send conversation id to socket looking for 'joinConversation'
                 setActiveId(response.data.conversationId);
                 setConversationId(response.data.conversationId);
                 setReceiverUser(recipient);

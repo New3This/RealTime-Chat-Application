@@ -1,6 +1,7 @@
 import { createContext, type ReactNode } from "react";
 import { useState, useEffect, useContext } from "react";
 import axios from "axios";
+import { API_URL } from "../config";
 
 export interface UserType {
     id: string;
@@ -29,7 +30,7 @@ export const AuthProvider = ({ children } : ChildrenType) => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const response = await axios.get<{ user: UserType }>('http://localhost:3000/chat/user', {withCredentials: true});
+                const response = await axios.get<{ user: UserType }>(`${API_URL}/chat/user`, {withCredentials: true});
                 if (response.status === 200 || response.status === 202) {
                     setUser(response.data.user);
                 }

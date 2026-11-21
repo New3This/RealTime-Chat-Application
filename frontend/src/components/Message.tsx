@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useRef, useState } from "react";
 import { type UserType } from "../context/AuthContext";
+import { API_URL } from "../config";
 
 export interface MessageProps {
     receiverUser: UserType | null;
@@ -29,7 +30,7 @@ export default function Message({receiverUser, onTyping, onStopTyping, isSenderT
             if (image) {
                 formData.append('fileContent', image);
             }
-            await axios.post(`http://localhost:3000/chat/message/${receiverUser.id}`, formData, {withCredentials: true});
+            await axios.post(`${API_URL}/chat/message/${receiverUser.id}`, formData, {withCredentials: true});
             setMessage("");
             setImage(null);
             if (fileInputRef.current) {
