@@ -1,4 +1,7 @@
 import 'dotenv/config'
+import path from 'node:path'
+import { existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
@@ -7,10 +10,21 @@ import authentication from './routes/authentication.js'
 import chat from './routes/chat.js'
 import { app, server, initializeSocket } from './socket/socket.js'
 
+const frontendDistPath = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '../frontend/dist'
+);
+
 app.use(cors({
     origin: process.env.FRONTEND_URL,
     credentials: true
 }));
+if (existsSync(frontendDistPath)) {
+    app.use(express.static(frontendDistPath));
+    app.get(['/login', '/register', '/chat'], (_req, res) => {
+        res.sendFile(path.join(frontendDistPath, 'index.html'));
+    });
+}
 app.use(express.json());
 app.use('/images', express.static('images'));
 app.use(cookieParser());
