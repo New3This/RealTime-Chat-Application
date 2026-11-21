@@ -1,1 +1,5 @@
-export const API_URL = import.meta.env.DEV ? "http://localhost:3000" : "";
+const configuredApiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+
+export const API_URL = configuredApiUrl || (
+  import.meta.env.DEV ? "http://localhost:3000" : window.location.origin
+);
