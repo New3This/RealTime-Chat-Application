@@ -16,16 +16,24 @@ const io = new Server(server, {
 });
 
 io.use((socket, next) => {
-    let cookie = socket.handshake.headers.cookie;
-    let token = cookie.split('=')[1];
+    const cookieHeader = socket.handshake.headers.cookie;
+    const token = cookieHeader
+        ?.split(';')
+        .map((cookie) => cookie.trim())
+        .find((cookie) => cookie.startsWith('token='))
+        ?.slice('token='.length);
+
+    if (!token) {
+        return next(new Error('Authentication required'));
+    }
 
     try {
         const user = jwt.verify(token, process.env.JWT_SECRET);
         socket.data.userId = user.id;
-        next();
+        return next();
     }
-    catch (err) {
-        console.log(err);
+    catch {
+        return next(new Error('Invalid or expired token'));
     }
 })
 
