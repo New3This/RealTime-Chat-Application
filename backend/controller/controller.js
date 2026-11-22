@@ -6,8 +6,6 @@ import { io } from '../socket/socket.js'
 import cloudinary from '../config/cloudinary.js';
 import { unlink } from 'node:fs/promises';
 
-const useSecureCookies = process.env.FRONTEND_URL?.startsWith('https://') ?? false;
-
 const extractURL = (imageUrl) => {
     if (!imageUrl) return null;
     try {
