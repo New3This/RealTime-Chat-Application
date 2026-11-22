@@ -7,11 +7,6 @@ import cloudinary from '../config/cloudinary.js';
 import { unlink } from 'node:fs/promises';
 
 const useSecureCookies = process.env.FRONTEND_URL?.startsWith('https://') ?? false;
-const tokenCookieSettings = {
-    httpOnly: true,
-    secure: useSecureCookies,
-    sameSite: useSecureCookies ? 'none' : 'lax'
-};
 
 const extractURL = (imageUrl) => {
     if (!imageUrl) return null;
@@ -111,7 +106,7 @@ async function Register(req, res) {
         const token = jwt.sign({id: generateUser._id, username: generateUser.username}, process.env.JWT_SECRET, {expiresIn: '3d'});
 
         res.cookie('token', token, {
-            ...tokenCookieSettings,
+            httpOnly: true,
             maxAge: 3 * 24 * 60 * 60 * 1000
         });
 
@@ -143,7 +138,7 @@ async function Login(req, res) {
         else if (await bcrypt.compare(password, user.password)) {
             const token = jwt.sign({id: user._id, username: user.username}, process.env.JWT_SECRET, {expiresIn: '3d'});
             res.cookie('token', token, {
-                ...tokenCookieSettings,
+                httpOnly: true,
                 maxAge: 3 * 24 * 60 * 60 * 1000
             });
             return res.status(202).json({
@@ -168,7 +163,7 @@ async function Login(req, res) {
 
 function Logout(req, res) {
     res.clearCookie('token', {
-        ...tokenCookieSettings
+        httpOnly: true
     });
     return res.status(204).send();
 }
