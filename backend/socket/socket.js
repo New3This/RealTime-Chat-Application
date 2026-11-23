@@ -6,7 +6,6 @@ import jwt from 'jsonwebtoken';
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    path: '/socket.io/',
     cors: {
         origin: process.env.FRONTEND_URL,
         credentials: true
@@ -40,20 +39,24 @@ async function broadcastOnlineUsers() {
     io.to('onlineUsersRoom').emit('updateOnlineUsers', await getOnlineUserIds());
 }
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
     console.log('user joined', socket.id);
-    const roomsJoined = Promise.all([
-        socket.join(`user:${socket.data.userId}`),
-        socket.join('onlineUsersRoom')
-    ]);
+    try {
+        await Promise.all([
+            socket.join(`user:${socket.data.userId}`), //
+            socket.join('onlineUsersRoom') // calculate who is online
+        ]);
 
-    roomsJoined.then(broadcastOnlineUsers).catch((error) => {
-        console.error('Failed to broadcast online users:', error);
-    });
+        await broadcastOnlineUsers()
+    }
+
+    catch (err) {
+        console.error("Failed to fetch users");
+    }
+
 
     socket.on('requestOnlineUsers', async () => {
         try {
-            await roomsJoined;
             socket.emit('updateOnlineUsers', await getOnlineUserIds());
         } catch (error) {
             console.error('Failed to fetch online users:', error);

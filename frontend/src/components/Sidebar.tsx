@@ -47,7 +47,6 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
     const filteredUsers = chatRooms?.filter((user) => user.username.toLowerCase().includes(search));
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
     const startChat = async (recipient: UserType) => {
-
         
         try {
 
@@ -75,7 +74,7 @@ export default function Sidebar({setReceiverUser, setReceipientImage, chatRooms,
             }
             else {
                 if (activeId !== null) { // if switching from another chat,
-                    socket.emit('leaveConversation', incomingId); // leave that cat
+                    socket.emit('leaveConversation', incomingId); // leave that chat
                 }
                 setIncomingId(response.data.conversationId);
                 setActiveId(response.data.conversationId);

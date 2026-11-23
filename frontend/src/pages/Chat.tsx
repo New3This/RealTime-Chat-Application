@@ -179,8 +179,11 @@ export default function Chat({ socket }: { socket: Socket }) {
             }
         };
 
-        socket.on('connect', joinCurrentConversation);
-        joinCurrentConversation();
+        socket.on('connect', joinCurrentConversation); // initial connect and reconnections
+
+        if (socket.connected) { // covers the issue of socket.on listener before made after socket is connected
+            joinCurrentConversation();
+        }
 
         return () => {
             socket.off('connect', joinCurrentConversation);
@@ -192,8 +195,6 @@ export default function Chat({ socket }: { socket: Socket }) {
             navigate('/login', { replace: true });
             return;
         }
-
-        
 
         getChatRooms();
 
