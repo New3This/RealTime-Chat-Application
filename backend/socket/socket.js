@@ -15,11 +15,8 @@ const io = new Server(server, {
 
 io.use((socket, next) => {
     const cookieHeader = socket.handshake.headers.cookie;
-    const token = cookieHeader
-        ?.split(';')
-        .map((cookie) => cookie.trim())
-        .find((cookie) => cookie.startsWith('token='))
-        ?.slice('token='.length);
+    const token = cookieHeader.split('=')[1];
+
 
     if (!token) {
         return next(new Error('Authentication required'));

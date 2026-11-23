@@ -3,6 +3,7 @@ import 'dotenv/config'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
+import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import connectDB from './db/connection.js'
 import authentication from './routes/authentication.js'
@@ -18,6 +19,11 @@ const frontendDistPath = path.resolve(
     // C:/Projects/realtimechat/backend
     // C:/Projects/realtimechat/frontend/dist
 );
+
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true
+}));
 
 app.use(express.static(frontendDistPath));
 
