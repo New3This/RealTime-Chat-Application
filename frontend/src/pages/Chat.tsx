@@ -295,7 +295,7 @@ export default function Chat({ socket }: { socket: Socket }) {
                                             (               
                                                 <div className={`flex flex-row items-center gap-1 w-full`}>
                                                     <div className={`size-[clamp(40px,5vw,64px)] overflow-hidden rounded-full mr-3`}>
-                                                        <img src={`${receipientImage}`} alt="Profile" className="h-full w-full object-cover"/>
+                                                        <img src={receipientImage ? `${receipientImage}` : "https://res.cloudinary.com/ncshgoxl/image/upload/v1794890477/no-profile-picture-15257.svg"} alt="Profile" className="h-full w-full object-cover"/>
                                                     </div>
 
                                                     <div className={`flex flex-col items-start w-full group`}>
