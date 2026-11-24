@@ -407,7 +407,7 @@ export default function Chat({ socket }: { socket: Socket }) {
 
 
                                                     <div className={`size-[clamp(40px,5vw,64px)] overflow-hidden rounded-full ml-3`}>
-                                                        <img src={`${user.image}`} alt="Profile" className="w-full h-full object-cover"/>
+                                                        <img src={user.image ? `${user.image}` : "https://res.cloudinary.com/ncshgoxl/image/upload/v1794890477/no-profile-picture-15257.svg"} alt="Profile" className="w-full h-full object-cover"/>
                                                     </div>
                                                 </div>
                                             )
